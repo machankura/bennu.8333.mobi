@@ -1,0 +1,200 @@
+extend templates/layout.pug
+
+block navigation
+    .container
+        if affiliateName
+            .center
+                p.flow-text #{affiliateName} welcomes you to Bennu
+        .row
+            .col.s12
+                .home-logo.valign-wrapper
+                    img.center.responsive-img(src="/static/img/logo.svg", alt="Bennu Logo", style="padding-left: 1rem; margin: auto;")
+
+block content
+    noscript
+    .container
+        .row
+            .col.s12
+                .scroll-hint.valign-wrapper
+                    i.center.material-icons.large(onclick="window.scrollBy(0, 250);") arrow_downward
+
+        .row
+
+        .row
+        .divider
+        .section
+            .center
+                h1 Bennu
+                .row
+                .divider
+                .row
+                .row
+                    .col.s12
+                .row
+                    .col.s12
+                        .row
+                            .col.s12.m5
+                                .center
+                                    img.app-shot.responsive-img(src="/static/img/app/chats.png", alt="Bennu's message list, showing group conversations and a direct message")
+                            .col.s12.m7
+                                .row
+                                    .col.s12
+                                        h3 A wallet a group holds together
+                                        p.flow-text Bennu is a chat app with a bitcoin wallet behind it. The group agrees a key among themselves, and after that it takes a quorum of the members to move a coin.
+                                .row
+                                    .col.s12
+                                        h3 Nobody holds the whole key
+                                        p.flow-text Not a server, not the person who started the group, not any one phone. The key is made in pieces, on the members' own devices, and it is never put back together anywhere.
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 The group wallet
+                        .row
+                        .divider
+                .row
+                    .col.s12.m7
+                        .container
+                            p.flow-text The wallet is on-chain and taproot. Its addresses come off the group's key by ordinary public derivation, which means two useful things: a member who cannot sign can still watch every address, and the group can hand a standard descriptor to any watch-only wallet — Bitcoin Core included — and have it follow along.
+
+                            p.flow-text Spending is a conversation. The proposal lands in the chat, every member sees what it does, and each device that signs has first rederived the addresses, matched each coin against the wallet and checked the fee for itself. A device signs what it has verified, not what it was told.
+
+                            p.flow-text Coins behind an open proposal are held back, so two spends cannot quietly reach for the same one. A transaction that is taking too long can be pushed through at twice the fee, in one button rather than a form. The group's own record of what it has sent is kept by each member's device.
+                    .col.s12.m5
+                        .center
+                            img.app-shot.responsive-img(src="/static/img/app/wallet.png", alt="A group's on-chain wallet in Bennu, with its balance, a receive address and its QR code")
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 Clans within clans
+                        .row
+                        .divider
+                        .container
+                            p.flow-text A group can make another group. The child gets a room of its own, a ceremony of its own and a key of its own — a fresh one, not one derived from the parent's, so that losing the child's key never puts the parent's at risk.
+
+                            p.flow-text What ties the two together is a birth certificate: the parent's quorum signing a statement that this room is its child. Anyone can check it. A group can say who it came from without the parent being able to sign in its place.
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 Guardians
+                        .row
+                        .divider
+                .row
+                    .col.s12.m7
+                        .container
+                            p.flow-text When a group makes a child, it decides there and then whether the child's wallet is guarded. A guarded wallet's addresses carry a second way to spend, one leaf per group above it — and every group above a guarded group is a guardian, all the way up.
+
+                            p.flow-text A guardian's leaf is on a timer. A coin has to sit for the number of blocks the guardian chose before that leaf can take it: anywhere from 6 blocks to 65,535, with twelve — about two hours — as the usual. Each group keeps the terms it set as its key passes down the tree, and Bennu says every delay in hours, days or years as well as blocks.
+
+                            p.flow-text In the ordinary case nothing ever touches those leaves. They are there for the day a child's members are gone, or a device is lost, or a quorum can no longer be reached, and the money would otherwise stay where it is forever.
+
+                            p.flow-text A group can also pay in. Funding a child's wallet works from the parent's side, and a group that chose to leave a child unguarded put no keys in its certificate at all — the choice is signed, and it cannot be taken back later.
+                    .col.s12.m5
+                        .center
+                            img.app-shot.responsive-img(src="/static/img/app/group.png", alt="A group's screen in Bennu, listing its signing key, its on-chain wallet, its subgroups and the member wallets it guards after six blocks")
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 A wallet of your own, guarded
+                        .row
+                        .divider
+                        .container
+                            p.flow-text The same shape works for one person. Your device makes a key only you hold, works out the leaves for the group and every group above it, and asks the group to guard it. The group's quorum signs a certificate saying it does.
+
+                            p.flow-text After that it is your wallet and it spends like one: you sign alone, whenever you want, with one signature and nobody's approval. The group can step in only after the delay, and only if you have not moved the coin yourself.
+
+                            p.flow-text It is the arrangement a family or a savings club already has, written down in script instead of trust — the money is yours, and someone is holding the spare key.
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 What Bennu does not do
+                        .row
+                        .divider
+                        .container
+                            p.flow-text It does not hold your coins. There is no Bennu account, no balance on our side, and nothing for us to freeze or lose.
+
+                            p.flow-text It does not keep your keys. The ceremony leaves each share on the device that made it, and the twelve words are yours alone — no one from Bennu will ever ask you for them.
+
+                            p.flow-text It does not run the room. Messages travel over nostr relays and the chain is read through Electrum servers, both of which you can change. What they carry is encrypted or already public.
+
+                            p.flow-text It does not decide for the group. Every rule here is one that honest clients keep and the chain enforces where it can. A device chooses what it offers; only a quorum chooses what happens.
+
+        .divider
+        .section
+            .row
+                .col.s12
+            .center
+                h2 How it works
+                .row
+                .divider
+                .row
+                .row
+                    .col.s12.m4
+                        h3 1. Make a profile
+                        p.flow-text Twelve words, written down once. The key that signs as you and the wallet that holds your coins both come off that one phrase, and it never leaves the device.
+                    .col.s12.m4
+                        h3 2. Start a group
+                        p.flow-text Add the people you want. The conversation is end-to-end encrypted and carried over nostr relays, so there is no room sitting on anybody's server waiting to be read.
+                    .col.s12.m4
+                        h3 3. Agree a key
+                        p.flow-text The group runs a key ceremony in its own chat. Every member takes part, and at the end the group has a signing key that no member can use alone.
+                    .col.s12.m4
+                        h3 4. Open the wallet
+                        p.flow-text The group's addresses are worked out from that key. Anyone can pay into them, and any member can watch them — the wallet exports a standard descriptor for a watch-only wallet to follow.
+                    .col.s12.m4
+                        h3 5. Propose a spend
+                        p.flow-text A member builds the transaction and puts it in the chat. It names the address, the amount and the fee, and it sits there until the group answers.
+                    .col.s12.m4
+                        h3 6. Sign it, or don't
+                        p.flow-text Each device checks the proposal against the coins it can see before it signs. Once enough members have, the transaction is complete and goes out to the network.
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 The key ceremony
+                        .row
+                        .divider
+                .row
+                    .col.s12.m7
+                        .container
+                            p.flow-text A group's key is made by the members together, with no dealer handing out shares. Each device contributes secret material of its own, and what comes out is a #[em t]-of-#[em n] key: it takes #[em t] of the #[em n] members to sign with it, and fewer than #[em t] can do nothing at all.
+
+                            p.flow-text The ceremony runs over the group's own encrypted chat. There is no second service to trust and nothing to install: the messages that carry it are the same messages that carry the conversation.
+
+                            p.flow-text One member coordinates, but coordinating buys no power. The coordinator passes other members' messages along and adds them up; it cannot learn a secret, and it cannot steer the group onto a key the members did not contribute to.
+
+                            p.flow-text Your device publishes nothing on your behalf. You are asked three separate times — to join, to contribute, and to confirm the result — and the third is a real check, because confirming is what refuses a key that was tampered with.
+
+                            p.flow-text A ceremony finishes only when every member has taken part. The screen names whoever it is still waiting on, rather than counting them, because two of three does not tell anyone whose door to knock on.
+                    .col.s12.m5
+                        .center
+                            img.app-shot.responsive-img(src="/static/img/app/ceremony.png", alt="A group chat in Bennu where each member's part of a signature is recorded, ending with: the group signed the event, it took 2 of 4 members")
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
+                        h2 Where it runs
+                        .row
+                        .divider
+                        .container
+                            p.flow-text Bennu is one app built for Android, iOS and the desktop, and a profile works the same on each. Several profiles can live on one device, and a profile signed in with an existing nostr key — or with a public key alone, to look around — works too.
+
+                            p.flow-text The whole of it is open: the app, the ceremony, the wallet and the checks every device makes before it signs. Read it at #[a(href="https://github.com/machankura/bennu-kmp", target="_blank") github.com/machankura/bennu-kmp].

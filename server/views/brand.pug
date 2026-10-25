@@ -1,0 +1,64 @@
+extend templates/layout.pug
+
+block content
+    .section.full-height
+        .container
+            .flow-text
+                H1 Brand
+
+                H2 Asset Downloads
+                //- a.btn.black download all assets
+
+                H3 Logos
+                //- a.btn.black download all logos
+
+                H4 Brand Logos
+                //- a.btn.black download brand logos
+                .row
+                    .col.s12.m6
+                        H5 Black on flame background
+                        .valign-wrapper
+                            img.center.responsive-img(src="/static/img/logo.svg", alt="Bennu Logo", style="padding-left: 1rem; margin: auto; width: auto; max-height: 79%; max-width: 79%; padding-top: 2rem; padding-bottom: 2rem;")
+                        .center
+                            a.btn.black(href="/static/img/logo.svg", download) download black logo
+
+                    .col.s12.m6
+                        H5 White on black background
+                        .valign-wrapper.black
+                            img.center.responsive-img(src="/static/img/logo-white.svg", alt="Bennu Logo", style="padding-left: 1rem; margin: auto; width: auto; max-height: 79%; max-width: 79%; padding-top: 2rem; padding-bottom: 2rem;")
+                        .center
+                            a.btn.black(href="/static/img/logo-white.svg", download) download white logo
+
+                    .col.s12.m6
+                        H5 Black on white background
+                        .valign-wrapper.white
+                            img.center.responsive-img(src="/static/img/logo.svg", alt="Bennu Logo", style="padding-left: 1rem; margin: auto; width: auto; max-height: 79%; max-width: 79%; padding-top: 2rem; padding-bottom: 2rem;")
+                        .center
+                            a.btn.black(href="/static/img/logo.svg", download) download black logo
+
+                    .col.s12.m6
+                        H5 Flame on black background
+                        .valign-wrapper.black
+                            img.center.responsive-img(src="/static/img/logo-flame.svg", alt="Bennu Logo", style="padding-left: 1rem; margin: auto; width: auto; max-height: 79%; max-width: 79%; padding-top: 2rem; padding-bottom: 2rem;")
+                        .center
+                            a.btn.black(href="/static/img/logo-flame.svg", download) download flame logo
+
+                H2 Colour
+
+                .row
+                    .col.s12.m6
+                        H5 Flame
+                        p.flow-text
+                            strong #FF3A1A
+                            br
+                            span The background the heron stands on, and the only brand colour.
+                    .col.s12.m6
+                        H5 Black
+                        p.flow-text
+                            strong #000000
+                            br
+                            span The heron, the type and the rules. Black on flame carries 5.9:1, so body text never goes white.
+
+                H2 Brand Guidelines
+
+                p.flow-text The Bennu heron is best when contrasting the background of the graphic/image it is being used on. Avoid writing the word Bennu to accompany the logo. If there is a need to have text accompany the logo make the text bennu.8333.mobi.

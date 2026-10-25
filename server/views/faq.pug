@@ -1,0 +1,69 @@
+extend templates/layout.pug
+
+block navigation
+    div
+
+block content
+    .container
+        h1 Frequently Asked Questions
+
+        p.flow-text These FAQs are no replacement for what you can learn by using Bennu.
+
+        .row
+            .col.s12.m8
+
+                ul.collapsible.flow-text
+                    li
+                        .collapsible-header What is Bennu?
+                        .collapsible-body
+                            p.flow-text Bennu is an encrypted group chat with a bitcoin wallet behind it. A group agrees a signing key among its members, and from then on it takes a quorum of them to move a coin. It runs on Android, iOS and the desktop, and it holds nothing on your behalf.
+                    li
+                        .collapsible-header Who holds the key?
+                        .collapsible-body
+                            p.flow-text Nobody, in the sense you are asking. The key is made in pieces, one on each member's device, and it is never assembled anywhere — not on a server, not on the phone of whoever started the group. Signing is done piece by piece, and a signature only comes out when enough members have taken part.
+                    li
+                        .collapsible-header What is a key ceremony?
+                        .collapsible-body
+                            p.flow-text It is how the group makes that key. Every member's device contributes secret material, and the messages that carry the ceremony travel over the group's own encrypted chat. One member coordinates and the rest answer, but the coordinator learns nothing and cannot steer the result. You are asked to approve your own part three times, and the ceremony finishes only once every member has taken part.
+                    li
+                        .collapsible-header How many members does it take to sign?
+                        .collapsible-body
+                            p.flow-text The group decides when it makes the key — a threshold out of the membership. Below that threshold nothing can be signed, by anyone, in any combination. Above it the group is fine: a quorum is enough, so one unreachable member does not freeze the wallet.
+                    li
+                        .collapsible-header What kind of wallet is it?
+                        .collapsible-body
+                            p.flow-text An on-chain taproot wallet. Its addresses are derived from the group's key, so anyone can pay into them, every member can watch them, and the group can export a standard descriptor for a watch-only wallet to follow. On the chain it looks like ordinary single-key spending.
+                    li
+                        .collapsible-header How does the group spend?
+                        .collapsible-body
+                            p.flow-text A member builds the transaction and proposes it in the chat, where everyone can see what it does. Each device checks it against the coins for itself before signing — the addresses, the amounts, the fee — and once enough members have signed it goes to the network. Coins behind an open proposal are held back so two spends cannot reach for the same one, and a transaction that stalls can be pushed through at twice the fee.
+                    li
+                        .collapsible-header What is a subgroup?
+                        .collapsible-body
+                            p.flow-text A group a group makes. The child gets its own room, its own ceremony and its own fresh key — not one derived from the parent's — plus a birth certificate: the parent's quorum signing that this room is its child. Anyone can check the certificate, and the parent still cannot sign in the child's place.
+                    li
+                        .collapsible-header What is a guardian?
+                        .collapsible-body
+                            p.flow-text When a group makes a child, it decides there and then whether the child's wallet is guarded. A guarded wallet's addresses carry a second way to spend for each group above it, and that way is on a timer: the coin has to sit for the number of blocks that guardian chose — from 6 to 65,535, about two hours by default — before the guardian can take it. It is for the day a quorum can no longer be reached. In every other case nothing touches it.
+                    li
+                        .collapsible-header Can I have a wallet of my own?
+                        .collapsible-body
+                            p.flow-text Yes, and you can ask your group to guard it. Your device makes a key only you hold and asks the group to sign a certificate for it. After that you spend alone, at any time, with one signature and nobody's approval; the group can only step in after the delay, and only if you have not moved the coin yourself.
+                    li
+                        .collapsible-header What happens if I lose my phone?
+                        .collapsible-body
+                            p.flow-text Your twelve-word recovery phrase brings the profile and its wallet back on another device. Keep it somewhere that is not the phone — if you lose both, that profile is gone for good. A group wallet is a different question: it survives as long as a quorum of the other members is still there, and that is what guardians are for when one is not.
+                    li
+                        .collapsible-header Does Bennu hold my bitcoin?
+                        .collapsible-body
+                            p.flow-text No. There is no Bennu account and no balance on our side. Messages travel over nostr relays and the chain is read through Electrum servers — you can change either — and what they carry is encrypted or already public.
+                    li
+                        .collapsible-header What does it cost?
+                        .collapsible-body
+                            p.flow-text Bennu takes no fee. You pay the ordinary bitcoin network fee on a spend, and nothing else.
+
+        p.flow-text Think we missed something? Need more information? The answer is in the code, at #[a(href="https://github.com/machankura/bennu-kmp", target="_blank") github.com/machankura/bennu-kmp].
+
+block additionalScripts
+    script
+        include js/faq-collapsible.js

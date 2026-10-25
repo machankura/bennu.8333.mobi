@@ -1,0 +1,83 @@
+
+doctype html
+html(lang="en" dir="ltr")
+    head
+        meta(charset="UTF-8")
+        meta(http-equiv="X-UA-Compatible", content="IE=edge")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+
+        <link async href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+        block seo
+            title= pageTitle
+
+        link(rel="apple-touch-icon", sizes="180x180", href="/static/img/icon/apple-touch-icon.png")
+        link(rel="icon", type="image/png", sizes="32x32", href="/static/img/icon/favicon-32x32.png")
+        link(rel="icon", type="image/png", sizes="16x16", href="/static/img/icon/favicon-16x16.png")
+        link(rel="manifest", href="/static/img/icon/site.webmanifest")
+        meta(name="theme-color", content="#ff3a1a")
+
+        //- Using Material Design Lite for the CSS stuff
+        //- https://getmdl.io
+        //- <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+        //- <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+        link(rel="stylesheet", href="/static/css/materialize.min.css")
+        style(media="screen")
+            include ../css/site-layout.css
+        style(media="screen")
+            include ../css/site.css
+
+        block additionalHead
+    body
+        header(role="banner")
+            block navigation
+                div
+
+        main.main(role="main")
+            block content
+                .container
+                    p.flow-text Center content 
+
+            .row
+                .col.s12
+                    //- I just need some space at the bottom...
+
+        block additionalContent
+
+        block footer
+            footer#bennu-footer.primary-color.page-footer.z-depth-3(role="footer")
+                .container
+                    .row
+                        .col.s12.m6
+                            p.flow-text.black-text Follow
+                            ul
+                                li
+                                    a.black-text(href="https://www.twitter.com/machankura8333", target="_blank") Twitter
+
+                        .col.s12.m6
+                            p.flow-text.black-text Bennu
+                            ul
+                                li
+                                    a.black-text(href="/") Home
+                                li
+                                    a.black-text(href="/brand") Brand
+                                li
+                                    a.black-text(href="/faqs") FAQ
+                                li
+                                    a.black-text(href="https://github.com/machankura/bennu-kmp", target="_blank") Source code
+
+                .footer-copyright.primary-color-dark
+                    .container
+                        -
+                            const year = new Date().getFullYear()
+                        span &copy; #{year} 
+                        strong Port 8333 Corporation
+
+
+
+        script(src="/static/js/materialize.min.js")
+        script
+            include ../js/site.js
+        block additionalScripts
+            //- All other scripts will be added here as they are needed in the views

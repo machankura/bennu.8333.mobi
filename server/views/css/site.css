@@ -1,0 +1,239 @@
+html {
+  text-align: unset !important;
+  scroll-behavior: smooth;
+}
+
+
+body {
+  background-color: #ff3a1a;
+  transition: background 1.5s;
+}
+
+.collapsible {
+  transition: background 1.5s;
+}
+
+/* Color scheme from https://material.io/resources/color/#!/?view.left=0&view.right=1&primary.color=ff3a1a&secondary.color=263238 */
+.primary-color {
+  background-color: #ff3a1a !important;
+}
+
+.primary-color-light {
+  background-color: #ff7449 !important;
+}
+
+.primary-color-dark {
+  background-color: #c30000 !important;
+}
+
+.secondary-color {
+  background-color: #263238 !important;
+}
+
+.secondary-color-light {
+  background-color: #4f5b62 !important;
+}
+
+.secondary-color-dark {
+  background-color: #000a12 !important;
+}
+
+.home-logo {
+  height: 75vh;
+}
+
+.scroll-hint {
+  height: 25vh;
+  margin: auto !important;
+}
+
+.scroll-hint i {
+  margin: auto;
+  animation: floating 2s ease-in-out infinite;
+}
+
+.floating {  
+  animation-name: floating;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  margin-left: 30px;
+  margin-top: 5px;
+}
+
+@keyframes floating {
+  0% { transform: translate(0,  0px); }
+  50%  { transform: translate(0, 15px); }
+  100%   { transform: translate(0, -0px); }    
+}
+
+a {
+  color: #000000;
+}
+
+.currency-row a.chip {
+  font-size: 2rem;
+  line-height: unset;
+  height: unset;
+  padding: 0 2rem;
+  border-radius: 2rem;
+}
+
+.currency-row a.chip > img {
+  float: left;
+  margin: 0 2rem 0 -2rem;
+  height: 3rem;
+  width: 3rem;
+  border-radius: 50%;
+}
+
+::placeholder {
+  color: black;
+}
+
+.iti__flag {background-image: url("/static/intl-tel/img/flags.png");}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .iti__flag {background-image: url("/static/intl-tel/img/flags@2x.png");}
+}
+
+.collapsible {
+  border-top: unset !important;
+  border-right: unset !important;
+  border-left: unset !important;
+  margin: .5rem 0 1rem 0;
+}
+
+.collapsible-header {
+  background-color: unset !important;
+  /* border-bottom: unset !important; */
+}
+
+.copy-text {
+  width: 100%;
+  text-transform: unset;
+}
+
+.width-button {
+  width: 100%;
+}
+
+
+nav {
+  color: unset;
+  background-color: unset;
+  width: unset;
+  height: unset;
+  line-height: unset;
+}
+
+nav, nav .nav-wrapper i, nav a.sidenav-trigger, nav a.sidenav-trigger i {
+  height: unset;
+  line-height: unset;
+}
+
+a {
+  text-decoration: unset !important;
+}
+
+main p a, main li a, footer li a {
+  text-decoration: underline !important;
+}
+
+nav {
+  -webkit-box-shadow: unset;
+  box-shadow: unset;
+}
+
+.trouble-image {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.6rem;
+  display: inline-block;
+  text-align: center;
+  overflow: clip;
+  margin-right: 4px;
+}
+
+.trouble-image-right {
+  margin-right: 1rem;
+}
+
+.trouble-icon {
+  margin-right: 2px !important;
+}
+
+.tabs .tab a:hover, .tabs .tab a.active {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.tabs .tab a {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.tabs.tabs-transparent .tab a,
+.tabs.tabs-transparent .tab.disabled a,
+.tabs.tabs-transparent .tab.disabled a:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.tabs .tab a:hover,
+.tabs .tab a.active {
+  color: rgb(0, 0, 0);
+}
+
+.tabs.tabs-transparent .tab a:hover,
+.tabs.tabs-transparent .tab a.active {
+  color: rgb(0, 0, 0);
+}
+
+.tabs .indicator {
+  background-color: rgb(0, 0, 0);
+}
+
+
+.tabs.tabs-transparent .indicator {
+  background-color: rgb(255, 255, 255);
+}
+
+.section {
+  min-height: 100vh;
+}
+
+.divider {
+  background-color: black;
+}
+
+.input-case {
+  text-transform: none !important;
+}
+
+.node-id {
+  word-wrap: anywhere;
+}
+
+.input-field .prefix ~ .select-wrapper {
+  margin-left: 3rem;
+  width: 92%;
+  width: calc(100% - 3rem);
+}
+
+.dropdown-content li > span {
+  color: black;
+}
+
+#payment-uri img {
+  width: 100%;
+}
+
+/* materialize's img.responsive-img caps at 100%; match its specificity to cap smaller */
+img.app-shot {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 2rem auto;
+  border: 2px solid #000;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
