@@ -237,3 +237,21 @@ img.app-shot {
   border-radius: 1.5rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
+
+/* 42 characters that have to stay readable and breakable on a phone, and that
+   nobody should have to squint at before sending money to them. */
+.btc-address {
+  display: block;
+  max-width: 32rem;
+  margin: 1.5rem auto 0;
+  padding: 0.9rem 1rem;
+  border: 2px solid #000;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  color: #000;
+  font-family: "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+}
