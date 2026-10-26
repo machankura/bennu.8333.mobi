@@ -671,14 +671,23 @@ img.app-shot {
 
 /* ---- the org chart ----------------------------------------------------- */
 
-/* A wide org chart scrolls sideways rather than shrinking: the point of it is
-   that it can be read at a glance, and type scaled to fit a phone cannot be.
-   The rule under it separates the overview from the cards that edit it. */
-.org-chart-scroll {
-  overflow-x: auto;
+/* The rule separates the overview from the cards that edit it. */
+.org-chart-block {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid #000;
+}
+
+/* A wide org chart scrolls sideways rather than shrinking: the point of it is
+   that it can be read at a glance, and type scaled to fit a phone cannot be. */
+.org-chart-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.org-key {
+  text-align: center;
+  margin-top: 0.75rem;
 }
 
 .org-chart {
@@ -714,4 +723,12 @@ img.app-shot {
 
 .org-line {
   font-size: 11px;
+}
+
+/* Hollow, and the same white as the page behind the boxes, so the ring reads
+   as a hole in the line rather than a bead threaded onto it. */
+.org-free {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.5;
 }

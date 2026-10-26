@@ -1120,6 +1120,9 @@
     var ORG_H = 46;
     var ORG_HGAP = 18;
     var ORG_VGAP = 42;
+    // How much of the line into an unguarded wallet is given over to the break
+    // and the ring that sits in it.
+    var ORG_BREAK = 13;
 
     function orgLine(node) {
         if (node.kind === "member") return "one member";
@@ -1159,7 +1162,16 @@
         node.children.forEach(function (child) {
             var childCx = childLeft + widths[child.id] / 2;
             var childCy = (depth + 1) * (ORG_H + ORG_VGAP) + ORG_H / 2;
-            out.edges.push({ x1: cx, y1: cy + ORG_H / 2, x2: childCx, y2: childCy - ORG_H / 2 });
+            // Guardianship belongs to the link, not the box: it is a thing the
+            // parent holds over the child, so the line between them is where
+            // it is drawn.
+            out.edges.push({
+                x1: cx,
+                y1: cy + ORG_H / 2,
+                x2: childCx,
+                y2: childCy - ORG_H / 2,
+                guarded: child.guarded,
+            });
             placeChart(child, childLeft, depth + 1, widths, out);
             childLeft += widths[child.id] + ORG_HGAP;
         });
@@ -1188,10 +1200,19 @@
             // Down, across, down: square corners read as a chart rather than a
             // sketch, and keep a wide row legible.
             var mid = (e.y1 + e.y2) / 2;
+            // An unguarded wallet is one nothing above it can reach, so the
+            // line stops short of it and a hollow ring sits in the gap: the
+            // chain of command runs on, the hold over the coins does not.
+            var end = e.guarded ? e.y2 : e.y2 - ORG_BREAK;
             edges.appendChild(svgEl("path", {
-                d: "M" + e.x1 + " " + e.y1 + " V" + mid + " H" + e.x2 + " V" + e.y2,
+                d: "M" + e.x1 + " " + e.y1 + " V" + mid + " H" + e.x2 + " V" + end,
                 fill: "none",
             }));
+            if (!e.guarded) {
+                edges.appendChild(
+                    svgEl("circle", { class: "org-free", cx: e.x2, cy: e.y2 - ORG_BREAK / 2, r: 4 })
+                );
+            }
         });
         svg.appendChild(edges);
 
@@ -1207,11 +1228,42 @@
             g.appendChild(svgEl("text", {
                 x: b.cx, y: b.cy + 14, "text-anchor": "middle", class: "org-line", text: orgLine(b.node),
             }));
-            g.appendChild(svgEl("title", { text: (b.node.name || "Unnamed") + " — " + orgLine(b.node) }));
+            var title = (b.node.name || "Unnamed") + " — " + orgLine(b.node);
+            if (b.node !== state.root && !b.node.guarded) title += ", on its own";
+            g.appendChild(svgEl("title", { text: title }));
             svg.appendChild(g);
         });
 
-        return el("div", { class: "org-chart-scroll" }, [svg]);
+        return el("div", { class: "org-chart-block" }, [
+            el("div", { class: "org-chart-scroll" }, [svg]),
+            chartKey(),
+        ]);
+    }
+
+    // Two marks need a word, and only when they are on the drawing: a chart of
+    // plain guarded subgroups is read without a key, and one printed under it
+    // anyway is just more to look past.
+    function chartKey() {
+        var hasMember = false;
+        var hasFree = false;
+        (function walk(node, isRoot) {
+            if (node.kind === "member") hasMember = true;
+            if (!isRoot && !node.guarded) hasFree = true;
+            node.children.forEach(function (child) {
+                walk(child, false);
+            });
+        })(state.root, true);
+
+        var parts = [];
+        if (hasMember) parts.push("A dashed box is one person's wallet rather than a group.");
+        if (hasFree) {
+            parts.push(
+                "A break in the line means that wallet is on its own: the group above it answers " +
+                    "for it, but cannot reach the coins."
+            );
+        }
+        if (!parts.length) return null;
+        return el("p", { class: "simulator-note org-key", text: parts.join(" ") });
     }
 
     // The root is centred over the whole chart, so a tree wider than the phone
@@ -1426,9 +1478,10 @@
     // on the box and the "t of n sign" under it. Swapping the whole drawing is
     // cheaper than finding the one text node, and it cannot go out of step.
     function refreshChart(mount) {
-        var existing = mount.querySelector(".org-chart-scroll");
+        var existing = mount.querySelector(".org-chart-block");
         if (!existing || !state.root) return;
-        var left = existing.scrollLeft;
+        var scroll = existing.querySelector(".org-chart-scroll");
+        var left = scroll ? scroll.scrollLeft : 0;
         existing.replaceWith(renderOrgChart());
         // Redrawn in place, so hold the sideways scroll where the reader put
         // it rather than recentring under them mid-keystroke.
