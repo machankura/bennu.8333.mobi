@@ -26,6 +26,7 @@
         nextId: 1,
         adding: null, // { parentId, kind, draft }
         removing: null, // node id awaiting confirmation
+        view: "build", // "build" or "chart"
         selectedId: null,
     };
 
@@ -1109,8 +1110,158 @@
         ]);
     }
 
+    // ---- the org chart ----------------------------------------------------
+
+    // A read-only look at the shape and nothing else: who is under whom, and
+    // how many have to agree. No policy, no script, no blocks, no bytes. The
+    // build view is for working out what a group should be; this is for
+    // showing someone what it is.
+    var ORG_W = 150;
+    var ORG_H = 46;
+    var ORG_HGAP = 18;
+    var ORG_VGAP = 42;
+
+    function orgLine(node) {
+        if (node.kind === "member") return "one member";
+        return node.threshold + " of " + node.members + " sign";
+    }
+
+    // Subtree widths first, then positions: a parent is centred over its
+    // children, which is the whole look of an org chart and cannot be done in
+    // one pass.
+    function measureChart(node, widths) {
+        if (!node.children.length) {
+            widths[node.id] = ORG_W;
+            return ORG_W;
+        }
+        var total = 0;
+        node.children.forEach(function (child, i) {
+            total += measureChart(child, widths) + (i ? ORG_HGAP : 0);
+        });
+        widths[node.id] = Math.max(ORG_W, total);
+        return widths[node.id];
+    }
+
+    function placeChart(node, left, depth, widths, out) {
+        var cx = left + widths[node.id] / 2;
+        var cy = depth * (ORG_H + ORG_VGAP) + ORG_H / 2;
+        out.boxes.push({ node: node, cx: cx, cy: cy });
+        out.depth = Math.max(out.depth, depth);
+
+        if (!node.children.length) return;
+
+        var span = 0;
+        node.children.forEach(function (child, i) {
+            span += widths[child.id] + (i ? ORG_HGAP : 0);
+        });
+
+        var childLeft = left + (widths[node.id] - span) / 2;
+        node.children.forEach(function (child) {
+            var childCx = childLeft + widths[child.id] / 2;
+            var childCy = (depth + 1) * (ORG_H + ORG_VGAP) + ORG_H / 2;
+            out.edges.push({ x1: cx, y1: cy + ORG_H / 2, x2: childCx, y2: childCy - ORG_H / 2 });
+            placeChart(child, childLeft, depth + 1, widths, out);
+            childLeft += widths[child.id] + ORG_HGAP;
+        });
+    }
+
+    function renderOrgChart() {
+        var widths = {};
+        var total = measureChart(state.root, widths);
+        var out = { boxes: [], edges: [], depth: 0 };
+        placeChart(state.root, 0, 0, widths, out);
+
+        var w = total + 8;
+        var h = (out.depth + 1) * (ORG_H + ORG_VGAP) - ORG_VGAP + 8;
+
+        var svg = svgEl("svg", {
+            class: "org-chart",
+            width: w,
+            height: h,
+            viewBox: "-4 -4 " + w + " " + h,
+            role: "img",
+            "aria-label": "An org chart of " + state.root.name + " and the groups under it",
+        });
+
+        var edges = svgEl("g", { class: "org-edges" });
+        out.edges.forEach(function (e) {
+            // Down, across, down: square corners read as a chart rather than a
+            // sketch, and keep a wide row legible.
+            var mid = (e.y1 + e.y2) / 2;
+            edges.appendChild(svgEl("path", {
+                d: "M" + e.x1 + " " + e.y1 + " V" + mid + " H" + e.x2 + " V" + e.y2,
+                fill: "none",
+            }));
+        });
+        svg.appendChild(edges);
+
+        out.boxes.forEach(function (b) {
+            var g = svgEl("g", { class: "org-box" + (b.node.kind === "member" ? " org-member" : "") });
+            g.appendChild(svgEl("rect", {
+                x: b.cx - ORG_W / 2, y: b.cy - ORG_H / 2, width: ORG_W, height: ORG_H, rx: 5,
+            }));
+            g.appendChild(svgEl("text", {
+                x: b.cx, y: b.cy - 2, "text-anchor": "middle", class: "org-name",
+                text: shorten(b.node.name || "Unnamed", 18),
+            }));
+            g.appendChild(svgEl("text", {
+                x: b.cx, y: b.cy + 14, "text-anchor": "middle", class: "org-line", text: orgLine(b.node),
+            }));
+            g.appendChild(svgEl("title", { text: (b.node.name || "Unnamed") + " — " + orgLine(b.node) }));
+            svg.appendChild(g);
+        });
+
+        return el("div", { class: "org-chart-scroll" }, [svg]);
+    }
+
+    // The root is centred over the whole chart, so a tree wider than the phone
+    // it is read on would otherwise open on whichever branch happens to be on
+    // the left. Starting in the middle puts the top of the hierarchy in front
+    // of you and leaves the rest a swipe away.
+    function centreChart() {
+        var scroll = document.querySelector(".org-chart-scroll");
+        if (!scroll) return;
+        scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
+    }
+
+    function renderViewToggle() {
+        var chart = state.view === "chart";
+        return el("div", { class: "simulator-views" }, [
+            el("button", {
+                class: "btn-flat simulator-quiet" + (chart ? "" : " is-on"),
+                type: "button",
+                "data-action": "view-build",
+                text: "build",
+            }),
+            el("button", {
+                class: "btn-flat simulator-quiet" + (chart ? " is-on" : ""),
+                type: "button",
+                "data-action": "view-chart",
+                text: "org chart",
+            }),
+        ]);
+    }
+
+    function renderChartView() {
+        return el("div", { class: "simulator-tree" }, [
+            renderViewToggle(),
+            el("p", {
+                class: "simulator-note center",
+                text: "Who answers to whom, and how many have to agree. Nothing else.",
+            }),
+            renderOrgChart(),
+            el("div", { class: "center simulator-reset" }, [
+                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
+                    icon(ICON_LINK),
+                    el("span", { text: "copy a link to this tree" }),
+                ]),
+            ]),
+        ]);
+    }
+
     function renderTree() {
         return el("div", { class: "simulator-tree" }, [
+            renderViewToggle(),
             renderNode(state.root),
             renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
@@ -1131,7 +1282,10 @@
         if (!mount) return;
 
         mount.innerHTML = "";
-        mount.appendChild(state.root ? renderTree() : renderEmpty());
+        mount.appendChild(
+            state.root ? (state.view === "chart" ? renderChartView() : renderTree()) : renderEmpty()
+        );
+        centreChart();
         syncFragment();
     }
 
@@ -1141,6 +1295,14 @@
         "add-root": function () {
             state.root = makeNode("group", "Group");
             state.selectedId = state.root.id;
+            render();
+        },
+        "view-build": function () {
+            state.view = "build";
+            render();
+        },
+        "view-chart": function () {
+            state.view = "chart";
             render();
         },
         show: function (target) {

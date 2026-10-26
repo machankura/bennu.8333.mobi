@@ -668,3 +668,68 @@ img.app-shot {
   padding: 0 0.9rem;
   font-size: 0.8rem;
 }
+
+/* ---- the view toggle and the org chart --------------------------------- */
+
+/* Two quiet buttons rather than a switch: the names say what each view is, and
+   whichever is on reads as pressed. Pushed to the top of the panel so the
+   choice is the first thing there, above the tree it applies to. */
+.simulator-views {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.simulator .simulator-views .is-on {
+  background-color: #000;
+  color: #fff;
+}
+
+.simulator .simulator-views .is-on:hover,
+.simulator .simulator-views .is-on:focus {
+  background-color: #000;
+}
+
+/* A wide org chart scrolls sideways rather than shrinking: the point of the
+   view is that it can be read at a glance, and type scaled to fit a phone
+   cannot be. */
+.org-chart-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.org-chart {
+  display: block;
+  margin: 0 auto;
+  font-size: 12px;
+}
+
+.org-edges path {
+  stroke: #000;
+  stroke-width: 1.5;
+}
+
+.org-box rect {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.5;
+}
+
+.org-box text {
+  fill: #000;
+}
+
+.org-name {
+  font-weight: 500;
+}
+
+/* A member wallet is a person, not a group, and the lighter line keeps that
+   difference visible without a word of explanation. */
+.org-member rect {
+  stroke-dasharray: 4 3;
+}
+
+.org-line {
+  font-size: 11px;
+}
