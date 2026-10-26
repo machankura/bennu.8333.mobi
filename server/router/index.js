@@ -25,6 +25,13 @@ module.exports = function () {
             })
         });
 
+    router.route('/playground')
+        .get(function(request, response, next) {
+            response.display("playground", {
+                pageTitle: "Playground - Bennu"
+            })
+        });
+
     // The icon links in the layout cover every browser that reads them, but a
     // bare /favicon.ico is still asked for before any markup is parsed.
     router.route('/favicon.ico')

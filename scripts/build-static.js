@@ -8,7 +8,7 @@
 //
 //     node scripts/build-static.js [outDir]
 //
-// Four pages is the whole site, so this builds all of it; the express app in
+// Five pages is the whole site, so this builds all of it; the express app in
 // server/ renders the same views and exists only to save a build while editing.
 
 const fs = require("fs")
@@ -26,6 +26,7 @@ const pages = [
     { view: "home.pug", file: "index.html", title: "Bennu" },
     { view: "brand.pug", file: "brand.html", title: "Brand - Bennu" },
     { view: "faq.pug", file: "faqs.html", title: "Frequently Asked Questions - Bennu" },
+    { view: "playground.pug", file: "playground.html", title: "Playground - Bennu" },
     { view: "404.pug", file: "404.html", title: "Page Not Found - Bennu" },
 ]
 
@@ -51,12 +52,17 @@ const assets = [
     "img/icon/site.webmanifest",
 ]
 
-// The server routes by path; a flat file tree cannot, so the three internal
-// links become their file names. Anything else absolute is an asset.
+// The bdk-cli playground the playground page frames: a prebuilt webpack bundle
+// that loads its chunks and wasm from beside its own script.
+const playground = "playground"
+
+// The server routes by path; a flat file tree cannot, so the internal links
+// become their file names. Anything else absolute is an asset.
 const links = [
     [/href="\/"/g, 'href="index.html"'],
     [/href="\/brand"/g, 'href="brand.html"'],
     [/href="\/faqs"/g, 'href="faqs.html"'],
+    [/href="\/playground"/g, 'href="playground.html"'],
     [/(href|src)="\/static\//g, '$1="static/'],
 ]
 
@@ -87,6 +93,9 @@ for (const asset of assets) {
     copy(path.join(staticDir, asset), path.join(out, "static", asset))
 }
 console.log("copied", assets.length, "assets")
+
+fs.cpSync(path.join(staticDir, playground), path.join(out, "static", playground), { recursive: true })
+console.log("copied", playground)
 
 // Tells Pages to serve the tree as it is rather than running it through Jekyll,
 // which would drop any file or folder whose name starts with an underscore.

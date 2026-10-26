@@ -1,9 +1,9 @@
 # bennu.8333.mobi
 
-The Bennu website. Four pages — the home page, the brand page, the FAQ and a 404
-— and nothing behind them. Forked from machankura.com, whose USSD flow, lightning
-addresses, clan pages and the database and lightning node under them have all
-been removed; what is left is an informational site.
+The Bennu website. Five pages — the home page, the brand page, the FAQ, the
+playground and a 404 — and nothing behind them. Forked from machankura.com,
+whose USSD flow, lightning addresses, clan pages and the database and lightning
+node under them have all been removed; what is left is an informational site.
 
 ## Publishing it
 

@@ -1,0 +1,15 @@
+extend templates/layout.pug
+
+block navigation
+    div
+
+block content
+    .container
+        h1 Playground
+
+        p.flow-text Paste a descriptor to see what it takes to spend from it. A group exports its wallet as a standard descriptor; pick #[strong Bitcoin] as the network, start the wallet to sync its balance and addresses, or open it in the policy compiler to see its spending conditions as blocks.
+
+        p This is the #[a(href="https://bitcoindevkit.org/bdk-cli/playground/", target="_blank") bdk-cli playground] from the Bitcoin Dev Kit, running in your browser. It only ever needs public keys: never paste a private key or seed into it.
+
+        //- An iframe keeps materialize's styles off the playground's own inputs.
+        iframe(src="/static/playground/playground.html", title="bdk-cli playground", style="width: 100%; height: 1200px; border: none;")
