@@ -294,3 +294,41 @@ img.app-shot {
 .simulator-reset a {
   text-decoration: underline !important;
 }
+
+.simulator-node-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.simulator-name-input {
+  flex: 1 1 10rem;
+}
+
+.simulator-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+}
+
+/* Materialize styles bare inputs globally; these are small, black on flame,
+   and have to stay legible inside a bordered card. */
+.simulator input[type="text"],
+.simulator input[type="number"] {
+  height: 2rem;
+  margin: 0 0 0.25rem 0;
+  border-bottom: 1px solid #000;
+  color: #000;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.simulator input[type="number"] {
+  width: 4.5rem;
+}
+
+.simulator input:focus {
+  border-bottom: 2px solid #000 !important;
+  box-shadow: none !important;
+}

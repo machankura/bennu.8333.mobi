@@ -34,6 +34,22 @@
         };
     }
 
+    function eachNode(node, visit) {
+        if (!node) return;
+        visit(node);
+        node.children.forEach(function (child) {
+            eachNode(child, visit);
+        });
+    }
+
+    function findNode(id) {
+        var found = null;
+        eachNode(state.root, function (node) {
+            if (node.id === id) found = node;
+        });
+        return found;
+    }
+
     // ---- rendering --------------------------------------------------------
 
     function el(tag, attrs, children) {
@@ -69,10 +85,45 @@
         ]);
     }
 
+    function numberField(node, field, label, min, max) {
+        var input = el("input", {
+            type: "number",
+            class: "simulator-number",
+            value: String(node[field]),
+            min: String(min),
+            max: String(max),
+            "data-id": node.id,
+            "data-field": field,
+        });
+        return el("label", { class: "simulator-field" }, [
+            el("span", { text: label }),
+            input,
+        ]);
+    }
+
     function renderNode(node) {
+        var name = el("input", {
+            type: "text",
+            class: "simulator-name-input",
+            value: node.name,
+            "data-id": node.id,
+            "data-field": "name",
+            "aria-label": "Name",
+        });
+
+        var fields = [name];
+        if (node.kind === "group") {
+            fields.push(numberField(node, "threshold", "signatures", 1, node.members));
+            fields.push(numberField(node, "members", "members", 1, 999));
+        }
+
         return el("div", { class: "simulator-node", "data-id": node.id }, [
-            el("div", { class: "simulator-node-name", text: node.name }),
-            el("div", { class: "simulator-node-detail", text: quorumSentence(node) }),
+            el("div", { class: "simulator-node-fields" }, fields),
+            el("div", {
+                class: "simulator-node-detail",
+                "data-quorum-for": node.id,
+                text: quorumSentence(node),
+            }),
         ]);
     }
 
@@ -111,6 +162,47 @@
         },
     };
 
+    // A full redraw on every keystroke would take the caret with it, so an edit
+    // writes to state and patches only what it derives: the quorum sentence,
+    // and the other number when a rule pulls it.
+    function onInput(event) {
+        var input = event.target.closest("[data-field]");
+        if (!input) return;
+        var node = findNode(input.getAttribute("data-id"));
+        if (!node) return;
+        var field = input.getAttribute("data-field");
+
+        if (field === "name") {
+            node.name = input.value;
+            return;
+        }
+
+        var value = parseInt(input.value, 10);
+        if (isNaN(value)) return;
+        node[field] = Math.max(1, value);
+
+        // 1 <= threshold <= members, enforced as it is typed rather than on a
+        // submit that does not exist. Lowering the members pulls the threshold
+        // down with it; nothing else can be out of range.
+        if (node.threshold > node.members) {
+            node.threshold = node.members;
+            var other = event.currentTarget.querySelector(
+                '[data-id="' + node.id + '"][data-field="threshold"]'
+            );
+            if (other) other.value = String(node.threshold);
+        }
+
+        var thresholdInput = event.currentTarget.querySelector(
+            '[data-id="' + node.id + '"][data-field="threshold"]'
+        );
+        if (thresholdInput) thresholdInput.setAttribute("max", String(node.members));
+
+        var sentence = event.currentTarget.querySelector(
+            '[data-quorum-for="' + node.id + '"]'
+        );
+        if (sentence) sentence.textContent = quorumSentence(node);
+    }
+
     function onClick(event) {
         var target = event.target.closest("[data-action]");
         if (!target) return;
@@ -126,6 +218,7 @@
         var mount = document.getElementById("wallet-simulator");
         if (!mount) return;
         mount.addEventListener("click", onClick);
+        mount.addEventListener("input", onInput);
         render();
     }
 
@@ -141,5 +234,7 @@
         state: state,
         render: render,
         makeNode: makeNode,
+        findNode: findNode,
+        quorumSentence: quorumSentence,
     };
 })(typeof self !== "undefined" ? self : this);
