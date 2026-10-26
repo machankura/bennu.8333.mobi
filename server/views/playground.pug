@@ -11,5 +11,7 @@ block content
 
         p This is the #[a(href="https://bitcoindevkit.org/bdk-cli/playground/", target="_blank") bdk-cli playground] from the Bitcoin Dev Kit, running in your browser. It only ever needs public keys: never paste a private key or seed into it.
 
+        p The policy compiler runs entirely on this page and sends nothing anywhere. #[strong Starting the wallet does not.] Syncing asks #[a(href="https://blockstream.info", target="_blank") blockstream.info] for the history of every address the descriptor derives, which tells them the whole of the wallet and that someone here is interested in it. Compile freely; sync only a descriptor you are willing to hand over.
+
         //- An iframe keeps materialize's styles off the playground's own inputs.
         iframe(src="/static/playground/playground.html", title="bdk-cli playground", style="width: 100%; height: 1200px; border: none;")
