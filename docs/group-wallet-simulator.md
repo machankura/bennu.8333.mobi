@@ -154,6 +154,14 @@ parent's delay, defaulting to 12 blocks, with the duration spelled out beside it
 A member wallet is simpler: a name, `1` of `1` fixed, and always guarded —
 asking a group to guard a wallet is the only reason to make one here.
 
+Every node but the root carries a *remove*, pushed to the far edge of its row
+away from the controls that build. It takes the whole subtree: nothing is
+re-parented, because a group's children are guarded by *it*, and hanging them on
+their grandparent would silently rewrite the terms they were made under. A leaf
+goes without asking; a node carrying others says how many go first, which is the
+only case where a mis-click costs real work. The root has none — it is the whole
+tree, and *start again* already says that.
+
 **Done when:** a tree three deep can be built, the guarded rule cannot be
 violated through the UI, and each node shows its own delay rather than inheriting
 the display of its parent's.

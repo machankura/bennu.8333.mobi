@@ -24,6 +24,7 @@
         root: null,
         nextId: 1,
         adding: null, // { parentId, kind, draft }
+        removing: null, // node id awaiting confirmation
         selectedId: null,
     };
 
@@ -58,6 +59,30 @@
         var found = null;
         eachNode(state.root, function (node) {
             if (node.id === id) found = node;
+        });
+        return found;
+    }
+
+    function parentOf(id) {
+        var found = null;
+        eachNode(state.root, function (node, parent) {
+            if (node.id === id) found = parent;
+        });
+        return found;
+    }
+
+    function countBelow(node) {
+        var n = 0;
+        node.children.forEach(function (child) {
+            n += 1 + countBelow(child);
+        });
+        return n;
+    }
+
+    function isWithin(ancestor, id) {
+        var found = false;
+        eachNode(ancestor, function (node) {
+            if (node.id === id) found = true;
         });
         return found;
     }
@@ -484,6 +509,7 @@
     }
 
     var ICON_CLEAR = "M7 7l10 10M17 7L7 17";
+    var ICON_TRASH = "M5.5 7.5h13M10 7.5v-2h4v2M7.6 7.5l.8 11.3h7.2l.8-11.3";
     var ICON_LINK = "M10 7H7.5a4.5 4.5 0 0 0 0 9H10M14 7h2.5a4.5 4.5 0 0 1 0 9H14M8.5 11.5h7";
 
     function renderEmpty() {
@@ -738,9 +764,56 @@
             );
         }
 
+        // The root has no remove: it is the whole tree, and "start again"
+        // already says that in words.
+        if (node !== state.root) {
+            buttons.push(
+                el("button", {
+                    class: "btn-flat simulator-add simulator-remove",
+                    type: "button",
+                    "data-action": "remove",
+                    "data-id": node.id,
+                    title: "Remove this wallet",
+                }, [icon(ICON_TRASH), el("span", { text: "remove" })])
+            );
+        }
+
         var controls = buttons.length
             ? el("div", { class: "simulator-node-controls" }, buttons)
             : null;
+
+        // Taking a node takes everything under it -- nothing is re-parented,
+        // because a group's children are guarded by *it*, and hanging them on
+        // their grandparent would silently rewrite the terms they were made
+        // under. So a node with anything below it says how much goes.
+        if (state.removing === node.id) {
+            var below = countBelow(node);
+            controls = el("div", { class: "simulator-node-controls simulator-confirm" }, [
+                el("span", {
+                    class: "simulator-note",
+                    text:
+                        "Remove " +
+                        (node.name || "this") +
+                        " and the " +
+                        below +
+                        (below === 1 ? " wallet" : " wallets") +
+                        " under it?",
+                }),
+                el("button", {
+                    class: "btn black simulator-compile-node",
+                    type: "button",
+                    "data-action": "confirm-remove",
+                    "data-id": node.id,
+                    text: "remove",
+                }),
+                el("button", {
+                    class: "btn-flat simulator-quiet",
+                    type: "button",
+                    "data-action": "cancel-remove",
+                    text: "cancel",
+                }),
+            ]);
+        }
 
         var body = [
             el("div", { class: "simulator-node-fields" }, fields),
@@ -915,6 +988,7 @@
             state.root = null;
             state.nextId = 1;
             state.adding = null;
+            state.removing = null;
             state.selectedId = null;
             render();
         },
@@ -968,6 +1042,26 @@
             if (navigator.clipboard) navigator.clipboard.writeText(policy);
             target.textContent = "copied";
         },
+        remove: function (target) {
+            var node = findNode(target.getAttribute("data-id"));
+            if (!node) return;
+            // A leaf goes without asking; anything carrying others asks first,
+            // which is the only case where a mis-click costs real work.
+            if (countBelow(node)) {
+                state.removing = node.id;
+                render();
+                return;
+            }
+            removeNode(node);
+        },
+        "confirm-remove": function (target) {
+            var node = findNode(target.getAttribute("data-id"));
+            if (node) removeNode(node);
+        },
+        "cancel-remove": function () {
+            state.removing = null;
+            render();
+        },
         "cancel-add": function () {
             state.adding = null;
             render();
@@ -992,6 +1086,23 @@
             render();
         },
     };
+
+    function removeNode(node) {
+        var parent = parentOf(node.id);
+        if (!parent) return;
+
+        // The selection may be the node itself or anything beneath it, and
+        // either way it is about to stop existing. The parent is where
+        // attention goes: it is what is left where the node was.
+        if (isWithin(node, state.selectedId)) state.selectedId = parent.id;
+
+        parent.children = parent.children.filter(function (child) {
+            return child !== node;
+        });
+        state.removing = null;
+        if (state.adding && !findNode(state.adding.parentId)) state.adding = null;
+        render();
+    }
 
     function onClick(event) {
         var toggle = event.target.closest("[data-draft-toggle]");

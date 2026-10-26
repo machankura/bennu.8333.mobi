@@ -577,3 +577,19 @@ img.app-shot {
   padding: 0 0.9rem;
   font-size: 0.8rem;
 }
+
+.simulator .simulator-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.simulator-confirm {
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.simulator-confirm .simulator-note {
+  margin: 0;
+}
