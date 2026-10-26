@@ -16,7 +16,23 @@
 
     var state = {
         root: null,
+        nextId: 1,
     };
+
+    // A group's wallet is guarded or not from the moment it is made, and the
+    // root answers to nobody, so the root is always unguarded.
+    function makeNode(kind, name) {
+        return {
+            id: "n" + state.nextId++,
+            kind: kind,
+            name: name,
+            members: kind === "member" ? 1 : 3,
+            threshold: kind === "member" ? 1 : 2,
+            guarded: false,
+            delay: 12,
+            children: [],
+        };
+    }
 
     // ---- rendering --------------------------------------------------------
 
@@ -31,6 +47,11 @@
             node.appendChild(child);
         });
         return node;
+    }
+
+    function quorumSentence(node) {
+        if (node.kind === "member") return "Spends alone, with one signature.";
+        return node.threshold + " of " + node.members + " members must sign.";
     }
 
     function renderEmpty() {
@@ -48,12 +69,55 @@
         ]);
     }
 
+    function renderNode(node) {
+        return el("div", { class: "simulator-node", "data-id": node.id }, [
+            el("div", { class: "simulator-node-name", text: node.name }),
+            el("div", { class: "simulator-node-detail", text: quorumSentence(node) }),
+        ]);
+    }
+
+    function renderTree() {
+        return el("div", { class: "simulator-tree" }, [
+            renderNode(state.root),
+            el("div", { class: "center simulator-reset" }, [
+                el("a", {
+                    href: "#",
+                    "data-action": "reset",
+                    text: "start again",
+                }),
+            ]),
+        ]);
+    }
+
     function render() {
         var mount = document.getElementById("wallet-simulator");
         if (!mount) return;
 
         mount.innerHTML = "";
-        mount.appendChild(renderEmpty());
+        mount.appendChild(state.root ? renderTree() : renderEmpty());
+    }
+
+    // ---- actions ----------------------------------------------------------
+
+    var actions = {
+        "add-root": function () {
+            state.root = makeNode("group", "Group");
+            render();
+        },
+        reset: function () {
+            state.root = null;
+            state.nextId = 1;
+            render();
+        },
+    };
+
+    function onClick(event) {
+        var target = event.target.closest("[data-action]");
+        if (!target) return;
+        var action = actions[target.getAttribute("data-action")];
+        if (!action) return;
+        event.preventDefault();
+        action(target);
     }
 
     // ---- wiring -----------------------------------------------------------
@@ -61,6 +125,7 @@
     function init() {
         var mount = document.getElementById("wallet-simulator");
         if (!mount) return;
+        mount.addEventListener("click", onClick);
         render();
     }
 
@@ -75,5 +140,6 @@
     global.WalletSimulator = {
         state: state,
         render: render,
+        makeNode: makeNode,
     };
 })(typeof self !== "undefined" ? self : this);
