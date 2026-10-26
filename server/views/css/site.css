@@ -255,3 +255,16 @@ img.app-shot {
   letter-spacing: 0.02em;
   word-break: break-all;
 }
+
+/* The wallet-structure simulator above the policy compiler. Framed like the
+   address box so the page keeps one idea of what a bordered block is. */
+.simulator {
+  border: 2px solid #000;
+  border-radius: 0.5rem;
+  padding: 1.5rem 1rem;
+  margin: 1.5rem 0;
+}
+
+.simulator-empty p {
+  margin-top: 0;
+}

@@ -13,5 +13,17 @@ block content
 
         p The policy compiler runs entirely on this page and sends nothing anywhere. #[strong Starting the wallet does not.] Syncing asks #[a(href="https://blockstream.info", target="_blank") blockstream.info] for the history of every address the descriptor derives, which tells them the whole of the wallet and that someone here is interested in it. Compile freely; sync only a descriptor you are willing to hand over.
 
+        h2 The structure
+
+        p Build the shape of a group's wallets — the group, the groups under it, the wallets it guards for its members — and see what the chain is asked to enforce for any one of them.
+
+        #wallet-simulator.simulator
+
+        h2 The policy
+
         //- An iframe keeps materialize's styles off the playground's own inputs.
         iframe(src="/static/playground/playground.html", title="bdk-cli playground", style="width: 100%; height: 1200px; border: none;")
+
+block additionalScripts
+    script
+        include js/wallet-simulator.js
