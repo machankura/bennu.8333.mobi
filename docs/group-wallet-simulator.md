@@ -270,8 +270,23 @@ Serialise state to JSON, compress it into the URL fragment, and read it back on
 load. The fragment, not the query string: it never reaches a server, and a tree
 is the kind of thing someone pastes into a chat to ask *is this what we want?*
 
-**Done when:** a built tree survives copy-paste of the URL into a fresh tab, and
-a malformed fragment falls back to the empty state rather than throwing.
+The selection travels with it, as a path of child indices rather than an id,
+since the ids are reassigned on the way back in. Without it a link arrives
+showing the root instead of the node the sender was looking at when they copied
+it, which is usually the one the link was about.
+
+And a tree that arrived in the url compiles itself: it draws the blocks, fills
+the policy and produces the descriptor without a button being pressed, because
+the sender already knows the answer and the picture is the thing they sent. A
+tree built here by hand does not, which would mean recompiling on every
+keystroke. The bundle is a 5MB wasm download, so this waits for a rendered block
+in the workspace — the only evidence from outside that the workspace exists —
+and gives up quietly after ~30s, leaving the button that still works.
+
+**Done when:** a built tree survives copy-paste of the URL into a fresh tab with
+the sender's node still selected and the compiler below already showing it, a
+link made before the selection travelled still opens on the root, and a
+malformed fragment falls back to the empty state rather than throwing.
 
 ### Phase 10 — what it does not model
 

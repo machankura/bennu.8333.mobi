@@ -201,9 +201,38 @@
         return new TextDecoder().decode(bytes);
     }
 
+    // The selection decides which node's conditions are shown and compiled, so a
+    // link without it arrives showing the root -- not the node the sender was
+    // looking at when they copied it. It travels as a path of child indices,
+    // which survives the ids being reassigned on the way back in.
+    function pathTo(id) {
+        var path = null;
+        (function walk(node, trail) {
+            if (!node || path) return;
+            if (node.id === id) {
+                path = trail;
+                return;
+            }
+            node.children.forEach(function (child, i) {
+                walk(child, trail.concat([i]));
+            });
+        })(state.root, []);
+        return path || [];
+    }
+
+    function nodeAtPath(path) {
+        var node = state.root;
+        for (var i = 0; i < path.length; i++) {
+            if (!node || !node.children[path[i]]) return null;
+            node = node.children[path[i]];
+        }
+        return node;
+    }
+
     function syncFragment() {
         if (typeof history === "undefined" || !history.replaceState) return;
-        var fragment = state.root ? "#tree=" + encode(JSON.stringify(serialise(state.root))) : "";
+        var payload = state.root ? { t: serialise(state.root), s: pathTo(state.selectedId) } : null;
+        var fragment = payload ? "#tree=" + encode(JSON.stringify(payload)) : "";
         history.replaceState(null, "", location.pathname + location.search + fragment);
     }
 
@@ -213,8 +242,14 @@
         try {
             var match = /(?:^|#|&)tree=([^&]+)/.exec(location.hash || "");
             if (!match) return false;
-            state.root = deserialise(JSON.parse(decode(match[1])), false);
-            state.selectedId = state.root.id;
+            var payload = JSON.parse(decode(match[1]));
+            // Links made before the selection travelled are a bare tree. They
+            // still open, on the root.
+            var rows = Array.isArray(payload) ? payload : payload.t;
+            var path = Array.isArray(payload) ? [] : payload.s || [];
+            state.root = deserialise(rows, false);
+            var selected = nodeAtPath(path);
+            state.selectedId = (selected || state.root).id;
             return true;
         } catch (e) {
             state.root = null;
@@ -269,6 +304,33 @@
             } catch (e) {
                 return false;
             }
+        },
+
+        // The bundle is a 5MB wasm download and a Blockly workspace built after
+        // it, so a link opened cold is interactive here long before the
+        // compiler below exists. __descriptorPolicy appears when the chunk
+        // executes, which is earlier still -- the workspace it draws into is
+        // the thing worth waiting for, and a rendered block is the only
+        // evidence of it from outside.
+        whenReady: function (run) {
+            var self = this;
+            var tries = 0;
+            (function poll() {
+                var d = self.doc();
+                var frame = document.querySelector(".simulator-page iframe, iframe");
+                var w = frame && frame.contentWindow;
+                var ready =
+                    d &&
+                    w &&
+                    w.__descriptorPolicy &&
+                    self.available() &&
+                    d.querySelector("#blocklyDiv .blocklyDraggable");
+                if (ready) return run();
+                // ~30s, then give up quietly: the compile button still works,
+                // and a visitor who waited that long has one to press.
+                if (tries++ > 120) return;
+                setTimeout(poll, 250);
+            })();
         },
 
         send: function (policy, ast, names) {
@@ -684,12 +746,16 @@
         ]);
     }
 
-    function renderCompileControl(node, policy, map) {
-        var names = [map[node.id]].concat(
+    function aliasNames(node, map) {
+        return [map[node.id]].concat(
             (node.guarded ? ancestorsOf(node.id) : []).map(function (a) {
                 return map[a.id];
             })
         );
+    }
+
+    function renderCompileControl(node, policy, map) {
+        var names = aliasNames(node, map);
 
         if (!compilerBridge.available()) {
             return el("div", { class: "simulator-compile" }, [
@@ -974,13 +1040,27 @@
 
     // ---- wiring -----------------------------------------------------------
 
+    function compileSelected() {
+        var node = findNode(state.selectedId);
+        if (!node) return;
+        var map = aliases();
+        compilerBridge.send(policyFor(node, map), policyAstFor(node, map), aliasNames(node, map));
+    }
+
     function init() {
         var mount = document.getElementById("wallet-simulator");
         if (!mount) return;
         mount.addEventListener("click", onClick);
         mount.addEventListener("input", onInput);
-        readFragment();
+
+        // A link carries a tree, and the whole point of sending one is the
+        // picture it makes: so a tree that arrived in the url compiles itself
+        // once the compiler below is up, rather than waiting for a button the
+        // sender already knows the answer to. A tree built here by hand does
+        // not — that would recompile on every edit.
+        var restored = readFragment();
         render();
+        if (restored) compilerBridge.whenReady(compileSelected);
     }
 
     if (typeof document !== "undefined") {
