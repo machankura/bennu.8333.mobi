@@ -656,6 +656,20 @@
             );
         }
 
+        // The root has no remove: it is the whole tree, and "start again"
+        // already says that in words.
+        if (node !== state.root) {
+            buttons.push(
+                el("button", {
+                    class: "btn-flat simulator-add simulator-remove",
+                    type: "button",
+                    "data-action": "remove",
+                    "data-id": node.id,
+                    title: "Remove this wallet",
+                }, [icon(ICON_TRASH), el("span", { text: "remove" })])
+            );
+        }
+
         var controls = buttons.length
             ? el("div", { class: "simulator-node-controls" }, buttons)
             : null;
