@@ -500,3 +500,11 @@ img.app-shot {
   margin-top: 1rem;
   font-size: 0.95rem;
 }
+
+.simulator-compile {
+  margin-top: 1rem;
+}
+
+.simulator-compile .simulator-note {
+  margin-top: 0.5rem;
+}

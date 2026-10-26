@@ -136,6 +136,72 @@
         return "or(99@" + self + ",1@" + guards + ")";
     }
 
+    // ---- the bridge to the compiler ---------------------------------------
+
+    // The only code that reaches into the iframe. Every id below belongs to the
+    // vendored bdk-cli bundle and a refresh of it may rename any of them, so
+    // each one is checked and a miss degrades to a copy button rather than
+    // throwing: the tree and the policy are useful on their own, and a broken
+    // bridge must not take them down.
+    //
+    // It is same-origin only because the bundle is served from our own
+    // /static/playground/. Point the iframe back at bitcoindevkit.org and this
+    // stops working, silently, and the fallback is what the reader gets.
+    var compilerBridge = {
+        IDS: ["policy", "compile_button", "compiler_script_type", "compiler_aliases", "add_key_alias"],
+
+        doc: function () {
+            try {
+                var frame = document.querySelector(".simulator-page iframe, iframe");
+                return frame && frame.contentDocument;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        available: function () {
+            var d = this.doc();
+            if (!d) return false;
+            return this.IDS.every(function (id) {
+                return !!d.getElementById(id);
+            });
+        },
+
+        send: function (policy, names) {
+            var d = this.doc();
+            if (!d) return false;
+            try {
+                var box = d.getElementById("compiler_aliases");
+                var rows = function () {
+                    return box.querySelectorAll("input[name=alias]");
+                };
+                // One row per alias. The add button lives in the last row and
+                // the rows default to "Generate WIF Key", which is what we want:
+                // the simulator has names, not keys.
+                var guard = 0;
+                while (rows().length < names.length && guard++ < 64) {
+                    d.getElementById("add_key_alias").click();
+                }
+                rows().forEach(function (input, i) {
+                    if (i >= names.length) return;
+                    input.value = names[i];
+                    input.dispatchEvent(new Event("input", { bubbles: true }));
+                });
+
+                // The compiler offers sh, wsh and sh-wsh — there is no taproot
+                // here. P2WSH is the honest closest: the spending conditions are
+                // exactly the ones above, and only the wrapper differs from what
+                // Bennu builds.
+                d.getElementById("compiler_script_type").value = "wsh";
+                d.getElementById("policy").value = policy;
+                d.getElementById("compile_button").click();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        },
+    };
+
     // ---- words ------------------------------------------------------------
 
     // Blocks are ten minutes each, give or take. Everywhere Bennu shows a
@@ -475,6 +541,48 @@
             el("code", { class: "simulator-policy-text", text: policy }),
             el("table", { class: "simulator-aliases" }, [el("tbody", {}, rows)]),
             renderOmission(node, map),
+            renderCompileControl(node, policy, map),
+        ]);
+    }
+
+    function renderCompileControl(node, policy, map) {
+        var names = [map[node.id]].concat(
+            (node.guarded ? ancestorsOf(node.id) : []).map(function (a) {
+                return map[a.id];
+            })
+        );
+
+        if (!compilerBridge.available()) {
+            return el("div", { class: "simulator-compile" }, [
+                el("button", {
+                    class: "btn black",
+                    type: "button",
+                    "data-action": "copy-policy",
+                    "data-policy": policy,
+                    text: "copy the policy",
+                }),
+                el("span", {
+                    class: "simulator-note",
+                    text: " then paste it into the policy compiler below.",
+                }),
+            ]);
+        }
+
+        return el("div", { class: "simulator-compile" }, [
+            el("button", {
+                class: "btn black",
+                type: "button",
+                "data-action": "compile",
+                "data-policy": policy,
+                "data-names": names.join(","),
+                text: "compile it below",
+            }),
+            el("p", { class: "simulator-note" }, [
+                el("span", {
+                    text:
+                        "The compiler wraps these conditions in P2WSH and generates a key for each name. Bennu uses taproot, so the script it draws is not the one Bennu builds — the conditions inside it are.",
+                }),
+            ]),
         ]);
     }
 
@@ -556,6 +664,18 @@
                 },
             };
             render();
+        },
+        compile: function (target) {
+            var ok = compilerBridge.send(
+                target.getAttribute("data-policy"),
+                target.getAttribute("data-names").split(",")
+            );
+            if (!ok) render();
+        },
+        "copy-policy": function (target) {
+            var policy = target.getAttribute("data-policy");
+            if (navigator.clipboard) navigator.clipboard.writeText(policy);
+            target.textContent = "copied";
         },
         "cancel-add": function () {
             state.adding = null;
@@ -722,6 +842,7 @@
         aliases: aliases,
         ancestorsOf: ancestorsOf,
         policyFor: policyFor,
+        compilerBridge: compilerBridge,
         MIN_DELAY: MIN_DELAY,
         MAX_DELAY: MAX_DELAY,
     };

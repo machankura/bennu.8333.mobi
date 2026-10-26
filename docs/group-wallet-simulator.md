@@ -7,8 +7,10 @@ delay. The node you select compiles to a miniscript policy, and that policy is
 handed to the compiler already on the page, which draws it as blocks and emits
 the descriptor.
 
-**Not built.** This is the plan, written against the page as it stands at
-`081d00a`.
+**Built**, phases 1-8 at the time of writing, one commit each. Written against
+the page as it stood at `081d00a`; where the build found the plan wrong the
+section says so, and it did twice — the compiler has no taproot option, and the
+alias table has to be filled or every compile errors.
 
 > The instruction this plan was written from ended mid-sentence: *"From the root
 > node, add a control to allow a user"*. Phase 4 is what I take the rest to be —
@@ -66,7 +68,7 @@ first three, and only through the adapter in Phase 8:
 |---|---|
 | `policy` | the policy input the compiler reads |
 | `compile_button` | compiles what is in `policy` |
-| `compiler_script_type` | `sh`/`wsh`/`tr` — the simulator sets `tr` |
+| `compiler_script_type` | `sh`/`wsh`/`sh-wsh` — the simulator sets `wsh`. **There is no taproot option**, so the compiler wraps the conditions in P2WSH and the page says so; the conditions are what is being illustrated, not the wrapper |
 | `compiler_aliases`, `add_key_alias` | the alias → key table |
 | `compiler_output` | where the descriptor lands |
 | `network`, `descriptor`, `start_button` | the wallet half; untouched |
@@ -182,9 +184,10 @@ ancestor, and emit:
   or(99@pk(SELF),1@or(and(pk(A1),older(d1)),and(pk(A2),older(d2)),…))
   ```
 
-  The weights are not decoration: they tell the compiler that `SELF` is the
-  common case and belongs on the key path, with the guardians in leaves. Without
-  them the compiler is free to choose a shape Bennu would never produce.
+  The weights are not decoration: they tell the compiler which branch is the
+  common case, and it puts the cheap spend path there. On Bennu's own taproot
+  wallets that is the key path; in the P2WSH the compiler emits it is the
+  `or_d` shape. Without them it is free to choose either way round.
 
 Aliases are generated per node from the node's name (`treasury`, `parent_1`),
 shown in a small table beside the policy, and pushed into the compiler's alias
@@ -216,8 +219,14 @@ One adapter, `compilerBridge`, the only code that touches the iframe:
 const doc = () => document.querySelector('iframe').contentDocument
 ```
 
-It sets `#compiler_script_type` to `tr`, fills `#policy`, adds each alias through
-`#add_key_alias`, and clicks `#compile_button`.
+It adds a row per alias through `#add_key_alias` — the rows default to
+*Generate WIF Key*, which is what a simulator holding names and no keys wants —
+fills each row's `input[name=alias]`, sets `#compiler_script_type` to `wsh`,
+fills `#policy` and clicks `#compile_button`.
+
+Compiling without the alias rows fails with *Couldn't map alias*, so filling
+them is not a nicety; it is the difference between a button that works and one
+that always errors.
 
 Every one of those is third-party DOM that a future bundle refresh may rename,
 so the bridge checks each id and, on a miss, degrades to a *Copy the policy*
@@ -229,9 +238,9 @@ The iframe is same-origin only because the bundle is served from our own
 `/static/playground/`. If it is ever pointed back at bitcoindevkit.org this
 whole phase stops working, silently, and the fallback is what the reader gets.
 
-**Done when:** *Compile this* fills the policy below and draws the blocks, and
-renaming `#policy` in a local copy produces the copy-button fallback instead of
-an exception.
+**Done when:** *Compile it below* fills the policy, fills the aliases and
+produces a descriptor, and renaming `#policy` in a local copy produces the
+copy-button fallback instead of an exception.
 
 ### Phase 9 — sharing a tree
 
