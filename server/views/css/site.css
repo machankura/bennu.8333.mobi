@@ -256,9 +256,12 @@ img.app-shot {
   word-break: break-all;
 }
 
-/* The wallet-structure simulator above the policy compiler. Framed like the
-   address box so the page keeps one idea of what a bordered block is. */
+/* The wallet-structure simulator above the policy compiler. White rather than
+   flame: it is a tool rather than prose, the compiler it feeds renders light
+   directly below it, and black on white carries 21:1 where black on flame
+   carries 5.9:1 — which matters for a panel of small type and number fields. */
 .simulator {
+  background-color: #fff;
   border: 2px solid #000;
   border-radius: 0.5rem;
   padding: 1.5rem 1rem;
@@ -310,6 +313,13 @@ img.app-shot {
   display: flex;
   flex-direction: column;
   font-size: 0.8rem;
+}
+
+/* Materialize paints every label #9e9e9e. These say what each number means, so
+   they have to be read: that grey is 2.8:1 on white and was 1.3:1 on flame,
+   which is why they looked washed out before the panel went white. */
+.simulator-field > span {
+  color: #333;
 }
 
 /* Materialize styles bare inputs globally; these are small, black on flame,
