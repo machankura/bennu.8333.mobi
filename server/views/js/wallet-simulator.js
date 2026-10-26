@@ -1048,6 +1048,55 @@
         ]);
     }
 
+    // The page says what the chain enforces. This says what it can see, and the
+    // two are not the same -- it is the strongest privacy claim Bennu has, it
+    // is invisible in the policy and in the descriptor, and the page makes it
+    // nowhere else.
+    function renderTaprootReveals(node, tree) {
+        var rows = [
+            el("tr", {}, [
+                el("th", { text: "if this spends" }),
+                el("th", { text: "a chain observer learns" }),
+            ]),
+            el("tr", {}, [
+                el("td", { text: node.name }),
+                el("td", { text: "Nothing beyond any single-key taproot spend." }),
+            ]),
+        ];
+
+        tree.leaves.forEach(function (leaf) {
+            rows.push(
+                el("tr", {}, [
+                    el("td", { text: leaf.name }),
+                    el("td", {
+                        text:
+                            "That there was a script tree at all; this one leaf and its " +
+                            leaf.delay +
+                            "-block wait; and that it sat at depth " +
+                            leaf.depth +
+                            ", which is a lower bound on how deep the hierarchy goes. The other " +
+                            (tree.leaves.length - 1) +
+                            (tree.leaves.length - 1 === 1 ? " leaf stays" : " leaves stay") +
+                            " hidden, and the key in it is unlinkable to any group.",
+                    }),
+                ])
+            );
+        });
+
+        return el("div", { class: "tap-reveals" }, [
+            el("p", {}, [
+                el("strong", { text: "Until a guardian acts, this is not distinguishable from one person's wallet. " }),
+                el("span", {
+                    text:
+                        "The leaves are committed to by a single hash inside " +
+                        node.name +
+                        "'s key. Nothing about them is on the chain, in the address, or anywhere an observer can look, until one of them is used — and then only that one.",
+                }),
+            ]),
+            el("table", { class: "simulator-aliases tap-costs" }, [el("tbody", {}, rows)]),
+        ]);
+    }
+
     function renderTaproot(node, map) {
         var tree = taprootTreeFor(node, map);
         if (!tree.guarded) return null;
@@ -1063,6 +1112,7 @@
             }),
             renderTaprootDiagram(tree),
             renderTaprootCosts(tree),
+            renderTaprootReveals(node, tree),
         ]);
     }
 

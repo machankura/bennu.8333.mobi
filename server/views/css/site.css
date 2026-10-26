@@ -654,3 +654,23 @@ img.app-shot {
   padding: 0.2rem 0.75rem 0.2rem 0;
   border: none;
 }
+
+.tap-reveals {
+  margin-top: 1.5rem;
+}
+
+.tap-reveals p {
+  border-left: 4px solid #000;
+  padding-left: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.tap-reveals td {
+  vertical-align: top;
+  padding-bottom: 0.4rem;
+}
+
+.tap-reveals td:first-child {
+  white-space: nowrap;
+  padding-right: 1rem;
+}
