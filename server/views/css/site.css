@@ -714,10 +714,27 @@ img.app-shot {
   stroke-width: 1.5;
 }
 
+/* Every box picks its own node, the same as the taproot button on its card,
+   so they behave like the controls they are. */
+.org-box {
+  cursor: pointer;
+}
+
 .org-box rect {
   fill: #fff;
   stroke: #000;
   stroke-width: 1.5;
+}
+
+.org-box:hover rect {
+  fill: #f2f2f2;
+}
+
+/* Filled grey and drawn heavier rather than inverted: a selected member wallet
+   has to keep its dashes, and black on black would swallow them. */
+.org-box.is-selected rect {
+  fill: #e4e4e4;
+  stroke-width: 3;
 }
 
 .org-box text {

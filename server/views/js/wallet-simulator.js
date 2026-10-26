@@ -1123,6 +1123,9 @@
     // How much of the line into an unguarded wallet is given over to the break
     // and the ring that sits in it.
     var ORG_BREAK = 13;
+    // How far the chart is scrolled sideways, kept across redraws. Null means
+    // nobody has scrolled it yet, so the next draw centres on the root.
+    var chartScroll = null;
 
     function orgLine(node) {
         if (node.kind === "member") return "one member";
@@ -1217,7 +1220,16 @@
         svg.appendChild(edges);
 
         out.boxes.forEach(function (b) {
-            var g = svgEl("g", { class: "org-box" + (b.node.kind === "member" ? " org-member" : "") });
+            // The same action the cards' taproot buttons use, so a box on the
+            // overview and a button on a card are one control in two places.
+            var g = svgEl("g", {
+                class:
+                    "org-box" +
+                    (b.node.kind === "member" ? " org-member" : "") +
+                    (b.node.id === state.selectedId ? " is-selected" : ""),
+                "data-action": "show",
+                "data-id": b.node.id,
+            });
             g.appendChild(svgEl("rect", {
                 x: b.cx - ORG_W / 2, y: b.cy - ORG_H / 2, width: ORG_W, height: ORG_H, rx: 5,
             }));
@@ -1234,8 +1246,13 @@
             svg.appendChild(g);
         });
 
+        var scroll = el("div", { class: "org-chart-scroll" }, [svg]);
+        scroll.addEventListener("scroll", function (event) {
+            chartScroll = event.currentTarget.scrollLeft;
+        });
+
         return el("div", { class: "org-chart-block" }, [
-            el("div", { class: "org-chart-scroll" }, [svg]),
+            scroll,
             chartKey(),
             // The chart deliberately holds nothing technical, so it has to say
             // where the technical half went: every card below carries a button
@@ -1277,10 +1294,22 @@
     // it is read on would otherwise open on whichever branch happens to be on
     // the left. Starting in the middle puts the top of the hierarchy in front
     // of you and leaves the rest a swipe away.
+    //
+    // After that it is the reader's: selecting a node redraws the whole panel,
+    // and a chart that snapped back to the middle every time would throw away
+    // the branch they had scrolled to in order to click it.
     function centreChart() {
         var scroll = document.querySelector(".org-chart-scroll");
         if (!scroll) return;
-        scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
+        var max = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+        scroll.scrollLeft = chartScroll === null ? max / 2 : Math.min(max, Math.max(0, chartScroll));
+    }
+
+    // A new tree, or a window that changed width, has no position worth
+    // keeping: both go back to the middle.
+    function recentreChart() {
+        chartScroll = null;
+        centreChart();
     }
 
     // The two things you can do to the whole tree rather than to one node.
@@ -1345,6 +1374,7 @@
             render();
         },
         reset: function () {
+            chartScroll = null;
             state.root = null;
             state.nextId = 1;
             state.adding = null;
@@ -1495,13 +1525,8 @@
     function refreshChart(mount) {
         var existing = mount.querySelector(".org-chart-block");
         if (!existing || !state.root) return;
-        var scroll = existing.querySelector(".org-chart-scroll");
-        var left = scroll ? scroll.scrollLeft : 0;
         existing.replaceWith(renderOrgChart());
-        // Redrawn in place, so hold the sideways scroll where the reader put
-        // it rather than recentring under them mid-keystroke.
-        var fresh = mount.querySelector(".org-chart-scroll");
-        if (fresh) fresh.scrollLeft = left;
+        centreChart();
     }
 
     // A full redraw on every keystroke would take the caret with it, so an edit
@@ -1593,7 +1618,7 @@
         // Turning a phone sideways changes how much of the chart fits, and the
         // half it should keep is the middle, where the root is.
         if (typeof window !== "undefined" && window.addEventListener) {
-            window.addEventListener("resize", centreChart);
+            window.addEventListener("resize", recentreChart);
         }
 
         // A link carries a tree, and the whole point of sending one is the
