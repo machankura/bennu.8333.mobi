@@ -26,7 +26,7 @@ const pages = [
     { view: "home.pug", file: "index.html", title: "Bennu" },
     { view: "brand.pug", file: "brand.html", title: "Brand - Bennu" },
     { view: "faq.pug", file: "faqs.html", title: "Frequently Asked Questions - Bennu" },
-    { view: "visualize.pug", file: "visualize.html", title: "Playground - Bennu" },
+    { view: "visualize.pug", file: "visualize.html", title: "Visualize - Bennu" },
     { view: "404.pug", file: "404.html", title: "Page Not Found - Bennu" },
 ]
 

@@ -28,7 +28,7 @@ module.exports = function () {
     router.route('/visualize')
         .get(function(request, response, next) {
             response.display("visualize", {
-                pageTitle: "Playground - Bennu"
+                pageTitle: "Visualize - Bennu"
             })
         });
 
