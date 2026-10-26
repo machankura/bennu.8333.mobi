@@ -493,3 +493,10 @@ img.app-shot {
   font-family: "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
   white-space: nowrap;
 }
+
+.simulator-omission {
+  border-left: 4px solid #000;
+  padding-left: 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}

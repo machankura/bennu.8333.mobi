@@ -474,6 +474,30 @@
             el("h3", { text: "What the chain enforces for " + node.name }),
             el("code", { class: "simulator-policy-text", text: policy }),
             el("table", { class: "simulator-aliases" }, [el("tbody", {}, rows)]),
+            renderOmission(node, map),
+        ]);
+    }
+
+    // Without this the simulator is actively misleading, which is why it is
+    // drawn with the policy rather than left to a footnote: everything above
+    // is the chain's half of the rules, and the group's own half is invisible
+    // to it.
+    function renderOmission(node, map) {
+        // A member wallet is 1 of 1. There is nothing the policy leaves out.
+        if (node.kind === "member") return null;
+
+        return el("p", { class: "simulator-omission" }, [
+            el("strong", { text: "The quorum is not in there. " }),
+            el("span", {
+                text:
+                    "pk(" +
+                    map[node.id] +
+                    ") is one signature from a key that " +
+                    node.threshold +
+                    " of " +
+                    node.members +
+                    " members have to co-operate to use. That agreement happens off the chain, in the key ceremony, and no policy, descriptor or block explorer can tell it apart from one person's wallet.",
+            }),
         ]);
     }
 
@@ -664,6 +688,10 @@
 
         var sentence = event.currentTarget.querySelector('[data-quorum-for="' + node.id + '"]');
         if (sentence) sentence.textContent = quorumSentence(node);
+
+        // The quorum is absent from the policy but named in the sentence under
+        // it, so t and n have to reach that one too.
+        if (node.id === state.selectedId) refreshPolicy(event.currentTarget);
     }
 
     // ---- wiring -----------------------------------------------------------
