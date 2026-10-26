@@ -729,7 +729,7 @@
         if (compilerBridge.available()) {
             buttons.push(
                 el("button", {
-                    class: "btn-flat simulator-add simulator-compile-node",
+                    class: "btn black simulator-compile-node",
                     type: "button",
                     "data-action": "compile",
                     "data-id": node.id,

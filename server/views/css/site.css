@@ -568,8 +568,12 @@ img.app-shot {
 }
 
 
-/* Compiling is not building, so it reads as the quieter sibling of the two add
-   controls it shares a row with. */
+/* Filled, where the two add controls beside it are outlined: compiling is the
+   thing the tree is built to do. Sized to their row so it does not tower over
+   the controls it sits with. */
 .simulator .simulator-compile-node {
-  border-style: dashed;
+  height: 2rem;
+  line-height: 2rem;
+  padding: 0 0.9rem;
+  font-size: 0.8rem;
 }
