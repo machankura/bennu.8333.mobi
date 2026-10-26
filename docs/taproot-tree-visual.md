@@ -5,9 +5,15 @@ hierarchy, which the tree already draws, but the **taproot output** that
 hierarchy produces — the internal key, the script tree hanging off it, and what
 each of those is worth in bytes and in privacy.
 
-**Not built.** Written against the simulator at `01e93d9`, and against
+**Built**, phases 1-3 and 5-8, one commit each. Phase 4 is **not built** and is
+blocked on its own precondition: it needs keys, and the key question belongs to
+the shelved [bdk-wasm plan](./playground-bdk-wasm.md). Hashes over invented keys
+would be real hashes of nothing.
+
+Written against the simulator at `01e93d9`, and against
 `bennu-kmp/docs/group-wallet-guardians.md` at `8cb6f04e`, which specifies the
-shape this has to be faithful to.
+shape this had to be faithful to. Where the build chose differently the phases
+say so.
 
 ---
 

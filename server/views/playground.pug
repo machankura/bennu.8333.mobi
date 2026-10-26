@@ -21,7 +21,7 @@ block content
 
         p.simulator-caveats
             strong What this does not model.
-            |  A policy that compiles is not a group that works. Four of Bennu's rules are nowhere in the script, and each is kept somewhere else:
+            |  A policy that compiles is not a group that works, and a tree that draws is not the whole of one address. Seven of Bennu's rules are nowhere in what you see above, and each is kept somewhere else:
         ul.simulator-caveats-list
             li
                 strong The ceremony.
@@ -35,6 +35,15 @@ block content
             li
                 strong The cap.
                 |  Bennu will not propose more than 100,000 sats in one spend on mainnet. That is a gate in the app, and the chain would happily take more.
+            li
+                strong One address.
+                |  The internal key is #[code account(K, network, n)/change/index], so #[em every address has its own tree], with its own leaves and its own root. The drawing shows one of them.
+            li
+                strong The leaf keys.
+                |  A guardian's key is derived one step further per child, so the same group's leaf is a different key in every descendant's tree. That is what makes a revealed leaf unlinkable to a group.
+            li
+                strong The key path.
+                |  #[code P] is a FROST threshold key that several members have to co-operate to use. The taproot tree can no more show that than the policy can — it is one key either way.
 
         h2 The policy
 
