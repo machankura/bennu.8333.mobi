@@ -288,8 +288,13 @@ img.app-shot {
   font-size: 0.95rem;
 }
 
-.simulator-reset {
-  margin-top: 1.5rem;
+/* A row above the chart rather than a centred strip under everything: these
+   act on the whole tree, so they read as the panel's own controls. */
+.simulator-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
   font-size: 0.9rem;
 }
 

@@ -1276,21 +1276,29 @@
         scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
     }
 
+    // The two things you can do to the whole tree rather than to one node.
+    // They sit at the top with the chart they act on: a panel that grows a card
+    // per wallet buries anything left at the bottom, and "start again" is a
+    // poor thing to come across by scrolling to the end.
+    function renderActions() {
+        return el("div", { class: "simulator-actions" }, [
+            el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
+                icon(ICON_LINK),
+                el("span", { text: "copy a link to this tree" }),
+            ]),
+            el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "reset" }, [
+                icon(ICON_CLEAR),
+                el("span", { text: "start again" }),
+            ]),
+        ]);
+    }
+
     function renderTree() {
         return el("div", { class: "simulator-tree" }, [
+            renderActions(),
             renderOrgChart(),
             renderNode(state.root),
             renderPolicy(),
-            el("div", { class: "center simulator-reset" }, [
-                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
-                    icon(ICON_LINK),
-                    el("span", { text: "copy a link to this tree" }),
-                ]),
-                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "reset" }, [
-                    icon(ICON_CLEAR),
-                    el("span", { text: "start again" }),
-                ]),
-            ]),
         ]);
     }
 
