@@ -257,6 +257,15 @@ takes a parsed tree rather than a string — `{type:'pk',alias}`,
 builds that shape from the same walk `policyFor` uses, rather than parsing the
 string back out.
 
+The control has to be put back after the first render. `available()` only asks
+whether the ids are there, and on a cold load the iframe's `contentDocument` is
+`about:blank` until the real document commits — 46ms on localhost, as long as
+the network takes over the wire — so the panel first renders with the bridge
+reported absent and leaves the compile controls out. Nothing redrew afterwards,
+so a tree built in that window had no way to compile at all. A poll on
+`available()` fires once and redraws, holding off while the panel owns the
+caret.
+
 Reaching it costs one line patched into the vendored bundle, which assigns the
 module to `window`. Webpack scopes both it and Blockly itself — `window.Blockly`
 is only the message catalogue — so there is no other way in. Without that line

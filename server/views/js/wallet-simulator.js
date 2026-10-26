@@ -306,6 +306,24 @@
             }
         },
 
+        // Two different questions, and the compile control needs both answered.
+        //
+        // available() asks whether the ids are there at all. On a cold load the
+        // iframe's contentDocument is about:blank until the real document
+        // commits -- 46ms on localhost, and as long as the network takes over
+        // the wire -- so it is false while the panel first renders, and the
+        // compile controls are left out of a tree built in that window. This
+        // polls for it and fires once, so they appear.
+        whenAvailable: function (run) {
+            var self = this;
+            var tries = 0;
+            (function poll() {
+                if (self.available()) return run();
+                if (tries++ > 240) return;
+                setTimeout(poll, 250);
+            })();
+        },
+
         // The bundle is a 5MB wasm download and a Blockly workspace built after
         // it, so a link opened cold is interactive here long before the
         // compiler below exists. __descriptorPolicy appears when the chunk
@@ -1112,6 +1130,18 @@
         // not — that would recompile on every edit.
         var restored = readFragment();
         render();
+
+        // The first render almost always happens before the iframe has a
+        // document, so the controls it decided to leave out have to be put back
+        // once there is one. Redrawing under a caret would take it out of the
+        // field, so this waits for the panel to not hold focus -- it fires
+        // within a second or two of load, when nobody is usually typing, but a
+        // name being typed is exactly when a surprise redraw hurts most.
+        compilerBridge.whenAvailable(function reRender() {
+            if (mount.contains(document.activeElement)) return setTimeout(reRender, 500);
+            render();
+        });
+
         if (restored) compilerBridge.whenReady(compileSelected);
     }
 
