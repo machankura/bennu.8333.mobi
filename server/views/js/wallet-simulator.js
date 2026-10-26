@@ -1013,6 +1013,23 @@
         return svg;
     }
 
+    // Q is drawn and not computed, and the page says so rather than showing a
+    // convincing hex string that is not one. Q = P + H(P ‖ root)·G needs a
+    // secp256k1 point addition; crypto.subtle has P-256, P-384 and P-521 and
+    // not secp256k1, so computing it would mean shipping a curve
+    // implementation to a page that has no cryptography in it at all.
+    function renderTaprootKey(node) {
+        return el("p", { class: "simulator-note tap-key-note" }, [
+            el("strong", { text: "Q is the only part of this that reaches the chain. " }),
+            el("span", {
+                text:
+                    "It is " +
+                    node.name +
+                    "'s own key with the whole tree folded into it as one hash — the address is Q and nothing else. Both halves of the picture above are inside it and neither is visible from it. It is drawn here rather than worked out: that fold needs arithmetic on the curve that this page does not carry.",
+            }),
+        ]);
+    }
+
     // Every number here follows from something the card above can be typed
     // into, which is the reason to show them at all.
     function renderTaprootCosts(tree) {
@@ -1111,6 +1128,7 @@
                     ", nearest first. The leaves lean to one side rather than balancing: every guardian can act at the same moment, so the shape costs nothing but bytes.",
             }),
             renderTaprootDiagram(tree),
+            renderTaprootKey(node),
             renderTaprootCosts(tree),
             renderTaprootReveals(node, tree),
         ]);
