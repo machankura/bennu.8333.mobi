@@ -181,13 +181,16 @@ ancestor, and emit:
 - **guarded**, with ancestors `A1…An` at their own delays:
 
   ```
-  or(99@pk(SELF),1@or(and(pk(A1),older(d1)),and(pk(A2),older(d2)),…))
+  or(pk(SELF),or(and(pk(A1),older(d1)),and(pk(A2),older(d2)),…))
   ```
 
-  The weights are not decoration: they tell the compiler which branch is the
-  common case, and it puts the cheap spend path there. On Bennu's own taproot
-  wallets that is the key path; in the P2WSH the compiler emits it is the
-  `or_d` shape. Without them it is free to choose either way round.
+  The plan originally put weights on that first `or` — `99@`/`1@` — to say the
+  owner is the common case. The build dropped them. This compiler has no
+  taproot, so there is no key path to steer anything onto; the block editor's
+  `or` hardcodes its weights to 1 and rewrites the policy input without them;
+  and compiling this shape with and without them yields byte-identical
+  miniscript. They were the one reason the four views of the same tree did not
+  agree, and they bought nothing to pay for it.
 
 Aliases are generated per node from the node's name (`treasury`, `parent_1`),
 shown in a small table beside the policy, and pushed into the compiler's alias
@@ -238,9 +241,28 @@ The iframe is same-origin only because the bundle is served from our own
 `/static/playground/`. If it is ever pointed back at bitcoindevkit.org this
 whole phase stops working, silently, and the fallback is what the reader gets.
 
-**Done when:** *Compile it below* fills the policy, fills the aliases and
-produces a descriptor, and renaming `#policy` in a local copy produces the
-copy-button fallback instead of an exception.
+It also draws the tree in the visual editor, which is the most legible of the
+views and otherwise sits on its default example while the policy below it says
+something else. The bundle's `__descriptorPolicy.loadPolicy` does that, and it
+takes a parsed tree rather than a string — `{type:'pk',alias}`,
+`{type:'older',value}`, `{type:'and'|'or',subs:[a,b]}` — so `policyAstFor`
+builds that shape from the same walk `policyFor` uses, rather than parsing the
+string back out.
+
+Reaching it costs one line patched into the vendored bundle, which assigns the
+module to `window`. Webpack scopes both it and Blockly itself — `window.Blockly`
+is only the message catalogue — so there is no other way in. Without that line
+the blocks simply stay as they were; nothing else breaks.
+
+Draw before compiling. Loading blocks makes Blockly write its own rendering back
+into `#policy` on a later tick, so drawing afterwards leaves the input showing
+something other than what was compiled.
+
+**Done when:** *Compile it below* draws the tree as blocks under the group's own
+names, fills the policy and the aliases, produces a descriptor, and the policy
+shown above, the input below, the blocks and the descriptor all describe the
+same conditions. Renaming `#policy` in a local copy produces the copy-button
+fallback instead of an exception.
 
 ### Phase 9 — sharing a tree
 

@@ -130,10 +130,13 @@
             guards = "or(" + leaves[i] + "," + guards + ")";
         }
 
-        // The weights are not decoration. They tell the compiler that the owner
-        // is the common case and belongs on the key path, with the guardians in
-        // leaves; without them it may pick a shape Bennu would never produce.
-        return "or(99@" + self + ",1@" + guards + ")";
+        // No weights. They said the owner is the common case, which is how a
+        // taproot wallet picks its key path -- but this compiler has no taproot
+        // option, the block editor's or cannot carry a weight, and compiling
+        // this shape with and without them gives the same miniscript. They
+        // bought nothing and were the one reason the policy here, the input
+        // below, the blocks and the descriptor did not all say the same thing.
+        return "or(" + self + "," + guards + ")";
     }
 
     // ---- sharing ----------------------------------------------------------
@@ -251,7 +254,24 @@
             });
         },
 
-        send: function (policy, names) {
+        // The visual editor is the most legible of the three views, and leaving
+        // it on its default example while the policy below it says something
+        // else is worse than not drawing at all. The bundle's own loadPolicy
+        // does it, reached through the one line this repo patches into the
+        // vendored file; without that line the blocks simply stay put.
+        draw: function (ast) {
+            try {
+                var frame = document.querySelector(".simulator-page iframe, iframe");
+                var w = frame && frame.contentWindow;
+                if (!w || !w.__descriptorPolicy || !w.__descriptorPolicy.loadPolicy) return false;
+                w.__descriptorPolicy.loadPolicy(ast);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        },
+
+        send: function (policy, ast, names) {
             var d = this.doc();
             if (!d) return false;
             try {
@@ -276,6 +296,13 @@
                 // here. P2WSH is the honest closest: the spending conditions are
                 // exactly the ones above, and only the wrapper differs from what
                 // Bennu builds.
+                // Draw first. Loading the blocks makes Blockly write its own
+                // rendering of them back into #policy, and its or blocks carry
+                // no weights, so drawing afterwards would leave the input
+                // showing an unweighted policy that is not the one just
+                // compiled.
+                this.draw(ast);
+
                 d.getElementById("compiler_script_type").value = "wsh";
                 d.getElementById("policy").value = policy;
                 d.getElementById("compile_button").click();
@@ -285,6 +312,34 @@
             }
         },
     };
+
+    // The same conditions as policyFor, in the shape the vendored bundle's
+    // policyToXml walks: {type:'pk',alias}, {type:'older',value},
+    // {type:'and'|'or',subs:[a,b]}. Built from the tree rather than parsed back
+    // out of the string, so the two cannot drift into disagreeing.
+    //
+    function policyAstFor(node, map) {
+        map = map || aliases();
+        var self = { type: "pk", alias: map[node.id] };
+        if (!node.guarded) return self;
+
+        var ancestors = ancestorsOf(node.id);
+        if (!ancestors.length) return self;
+
+        var leaves = ancestors.map(function (a) {
+            return {
+                type: "and",
+                subs: [{ type: "pk", alias: map[a.id] }, { type: "older", value: a.delay }],
+            };
+        });
+
+        var guards = leaves[leaves.length - 1];
+        for (var i = leaves.length - 2; i >= 0; i--) {
+            guards = { type: "or", subs: [leaves[i], guards] };
+        }
+
+        return { type: "or", subs: [self, guards] };
+    }
 
     // ---- words ------------------------------------------------------------
 
@@ -657,7 +712,7 @@
                 class: "btn black",
                 type: "button",
                 "data-action": "compile",
-                "data-policy": policy,
+                "data-id": node.id,
                 "data-names": names.join(","),
                 text: "compile it below",
             }),
@@ -753,8 +808,12 @@
             render();
         },
         compile: function (target) {
+            var node = findNode(target.getAttribute("data-id"));
+            if (!node) return;
+            var map = aliases();
             var ok = compilerBridge.send(
-                target.getAttribute("data-policy"),
+                policyFor(node, map),
+                policyAstFor(node, map),
                 target.getAttribute("data-names").split(",")
             );
             if (!ok) render();
@@ -938,6 +997,7 @@
         aliases: aliases,
         ancestorsOf: ancestorsOf,
         policyFor: policyFor,
+        policyAstFor: policyAstFor,
         compilerBridge: compilerBridge,
         serialise: serialise,
         deserialise: deserialise,

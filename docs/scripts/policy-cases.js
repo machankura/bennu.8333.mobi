@@ -62,7 +62,7 @@ console.log("policy cases");
     check(
         "one guardian",
         S.policyFor(child),
-        "or(99@pk(child),1@and(pk(root),older(12)))"
+        "or(pk(child),and(pk(root),older(12)))"
     );
 }
 
@@ -80,7 +80,7 @@ console.log("policy cases");
     check(
         "two guardians keep their own delays",
         S.policyFor(grandchild),
-        "or(99@pk(leaf),1@or(and(pk(mid),older(12)),and(pk(root),older(144))))"
+        "or(pk(leaf),or(and(pk(mid),older(12)),and(pk(root),older(144))))"
     );
 }
 
@@ -98,7 +98,7 @@ console.log("policy cases");
     check(
         "member wallet under a guarded group",
         S.policyFor(wallet),
-        "or(99@pk(alice),1@or(and(pk(treasury),older(6)),and(pk(root),older(144))))"
+        "or(pk(alice),or(and(pk(treasury),older(6)),and(pk(root),older(144))))"
     );
 }
 
@@ -140,9 +140,55 @@ console.log("policy cases");
         r.delay = S.MIN_DELAY;
         r.children.push(child);
     });
-    check("minimum delay", S.policyFor(child), "or(99@pk(child),1@and(pk(root),older(6)))");
+    check("minimum delay", S.policyFor(child), "or(pk(child),and(pk(root),older(6)))");
     S.state.root.delay = S.MAX_DELAY;
-    check("maximum delay", S.policyFor(child), "or(99@pk(child),1@and(pk(root),older(65535)))");
+    check("maximum delay", S.policyFor(child), "or(pk(child),and(pk(root),older(65535)))");
+}
+
+// The AST the blocks are drawn from has to say the same thing as the string,
+// or the picture and the text disagree about the same tree.
+console.log("block tree cases");
+{
+    let grandchild;
+    tree((r, make) => {
+        const mid = make("group", "Mid", { guarded: true, delay: 12 });
+        grandchild = make("group", "Leaf", { guarded: true });
+        mid.children.push(grandchild);
+        r.delay = 144;
+        r.children.push(mid);
+    });
+    const ast = S.policyAstFor(grandchild);
+    check(
+        "ast mirrors the string",
+        JSON.stringify(ast),
+        JSON.stringify({
+            type: "or",
+            subs: [
+                { type: "pk", alias: "leaf" },
+                {
+                    type: "or",
+                    subs: [
+                        { type: "and", subs: [{ type: "pk", alias: "mid" }, { type: "older", value: 12 }] },
+                        { type: "and", subs: [{ type: "pk", alias: "root" }, { type: "older", value: 144 }] },
+                    ],
+                },
+            ],
+        })
+    );
+
+    // Every node type in it must be one the bundle's policyToXml can draw.
+    const drawable = new Set(["pk", "older", "after", "and", "or", "thresh"]);
+    let unknown = [];
+    (function walk(n) {
+        if (!drawable.has(n.type)) unknown.push(n.type);
+        (n.subs || []).forEach(walk);
+    })(ast);
+    check("every node type is drawable", unknown.join(",") || "none", "none");
+}
+
+{
+    const root = tree(() => {});
+    check("an unguarded root is a single pk block", JSON.stringify(S.policyAstFor(root)), JSON.stringify({ type: "pk", alias: "root" }));
 }
 
 console.log("duration cases");
