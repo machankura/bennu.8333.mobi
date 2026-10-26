@@ -288,14 +288,22 @@ img.app-shot {
   font-size: 0.95rem;
 }
 
-/* A row above the chart rather than a centred strip under everything: these
-   act on the whole tree, so they read as the panel's own controls. */
+/* At both ends of the panel, since these act on the whole tree and the panel
+   is taller than a screen as soon as there are a few wallets in it. */
 .simulator-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.25rem;
-  margin-bottom: 0.5rem;
   font-size: 0.9rem;
+}
+
+.simulator-actions-top {
+  margin-bottom: 0.5rem;
+}
+
+.simulator-actions-bottom {
+  margin-top: 1.5rem;
 }
 
 /* cancel, copy a link and start again are actions, not navigation, so they are

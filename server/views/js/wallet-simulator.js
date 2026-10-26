@@ -1313,11 +1313,11 @@
     }
 
     // The two things you can do to the whole tree rather than to one node.
-    // They sit at the top with the chart they act on: a panel that grows a card
-    // per wallet buries anything left at the bottom, and "start again" is a
-    // poor thing to come across by scrolling to the end.
-    function renderActions() {
-        return el("div", { class: "simulator-actions" }, [
+    // Drawn at both ends: the panel grows a card per wallet and a taproot
+    // diagram besides, so whichever end a reader has scrolled to, these are
+    // there without a journey back to the other one.
+    function renderActions(where) {
+        return el("div", { class: "simulator-actions simulator-actions-" + where }, [
             el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
                 icon(ICON_LINK),
                 el("span", { text: "copy a link to this tree" }),
@@ -1331,10 +1331,11 @@
 
     function renderTree() {
         return el("div", { class: "simulator-tree" }, [
-            renderActions(),
+            renderActions("top"),
             renderOrgChart(),
             renderNode(state.root),
             renderPolicy(),
+            renderActions("bottom"),
         ]);
     }
 
@@ -1409,8 +1410,11 @@
             syncFragment();
             if (navigator.clipboard) navigator.clipboard.writeText(location.href);
             // The link carries an icon now, so only its label changes.
-            var label = target.querySelector("span");
-            if (label) label.textContent = "link copied";
+            // Both copies say it, or the one the reader did not press still
+            // offers to do what has just been done.
+            document.querySelectorAll('[data-action="copy-link"] span').forEach(function (label) {
+                label.textContent = "link copied";
+            });
         },
         "copy-policy": function (target) {
             var policy = target.getAttribute("data-policy");
