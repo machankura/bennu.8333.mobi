@@ -433,3 +433,24 @@ img.app-shot {
   text-decoration: underline !important;
   font-size: 0.9rem;
 }
+
+.simulator-node.is-selected {
+  border-width: 4px;
+}
+
+/* A tree four deep at 375px runs out of room before it runs out of levels, so
+   the indent shrinks rather than the page scrolling sideways. */
+@media only screen and (max-width: 600px) {
+  .simulator {
+    padding: 1rem 0.5rem;
+  }
+
+  .simulator-children {
+    margin-left: 0.25rem;
+    padding-left: 0.5rem;
+  }
+
+  .simulator-node {
+    padding: 0.6rem 0.6rem;
+  }
+}

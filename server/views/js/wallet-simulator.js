@@ -24,6 +24,7 @@
         root: null,
         nextId: 1,
         adding: null, // { parentId, kind, draft }
+        selectedId: null,
     };
 
     // A group's wallet is guarded or not from the moment it is made, and the
@@ -348,7 +349,15 @@
             body.push(renderAddForm(node));
         }
 
-        var card = el("div", { class: "simulator-node", "data-id": node.id }, body);
+        var card = el(
+            "div",
+            {
+                class: "simulator-node" + (state.selectedId === node.id ? " is-selected" : ""),
+                "data-id": node.id,
+                "data-action": "select",
+            },
+            body
+        );
 
         if (!node.children.length) return card;
 
@@ -384,12 +393,18 @@
     var actions = {
         "add-root": function () {
             state.root = makeNode("group", "Group");
+            state.selectedId = state.root.id;
+            render();
+        },
+        select: function (target) {
+            state.selectedId = target.getAttribute("data-id");
             render();
         },
         reset: function () {
             state.root = null;
             state.nextId = 1;
             state.adding = null;
+            state.selectedId = null;
             render();
         },
         "add-child": function (target) {
@@ -426,6 +441,7 @@
                 guarded: draft.guarded,
             });
             parent.children.push(child);
+            state.selectedId = child.id;
             // The delay belongs to the ancestor doing the guarding, so it is
             // written to the parent rather than to the child it was chosen for.
             if (draft.guarded) parent.delay = draft.delay;
@@ -437,6 +453,21 @@
 
     function onClick(event) {
         var toggle = event.target.closest("[data-draft-toggle]");
+        if (!toggle && event.target.closest("input, label")) {
+            // Clicking into a field selects the card it is on, but must not
+            // redraw: the redraw would take the caret out of the field again.
+            var owner = event.target.closest("[data-id]");
+            if (owner && state.selectedId !== owner.getAttribute("data-id")) {
+                state.selectedId = owner.getAttribute("data-id");
+                var mount = event.currentTarget;
+                mount.querySelectorAll(".simulator-node.is-selected").forEach(function (n) {
+                    n.classList.remove("is-selected");
+                });
+                var card = mount.querySelector('.simulator-node[data-id="' + state.selectedId + '"]');
+                if (card) card.classList.add("is-selected");
+            }
+            return;
+        }
         if (toggle) {
             state.adding.draft[toggle.getAttribute("data-draft-toggle")] = toggle.checked;
             render();
