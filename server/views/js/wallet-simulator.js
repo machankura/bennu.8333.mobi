@@ -1013,6 +1013,25 @@
         return svg;
     }
 
+    // The diagram labelled a box P and nothing on the page said what it was.
+    // It is the internal key: the owner's own key walked to this one address,
+    // and the key path is the ordinary way the wallet spends.
+    function renderTaprootInternalKey(node) {
+        var whose =
+            node.kind === "member"
+                ? node.name + " holds alone"
+                : "a quorum of " + node.name + " co-operates to use";
+        return el("p", { class: "simulator-note tap-key-note" }, [
+            el("strong", { text: "P is the key this wallet spends with. " }),
+            el("span", {
+                text:
+                    "It is the key " +
+                    whose +
+                    ", walked down to this one address — every address has its own P. Spending with it is the key path: one signature, no leaf touched, nothing about the tree disclosed. It is also not what anyone sees; P is tweaked by the tree to make Q.",
+            }),
+        ]);
+    }
+
     // Q is drawn and not computed, and the page says so rather than showing a
     // convincing hex string that is not one. Q = P + H(P ‖ root)·G needs a
     // secp256k1 point addition; crypto.subtle has P-256, P-384 and P-521 and
@@ -1140,6 +1159,7 @@
                     ", so no group holds a leaf over it, and there is nothing for the key to commit to.",
             }),
             svg,
+            renderTaprootInternalKey(node),
             el("p", { class: "simulator-note tap-key-note" }, [
                 el("strong", { text: "There is nothing to hide here because there is nothing to reveal. " }),
                 el("span", {
@@ -1164,6 +1184,7 @@
                     ", nearest first. The leaves lean to one side rather than balancing: every guardian can act at the same moment, so the shape costs nothing but bytes.",
             }),
             renderTaprootDiagram(tree),
+            renderTaprootInternalKey(node),
             renderTaprootKey(node),
             renderTaprootCosts(tree),
             renderTaprootReveals(node, tree),
