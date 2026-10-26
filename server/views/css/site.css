@@ -695,6 +695,14 @@ img.app-shot {
   margin-top: 0.75rem;
 }
 
+/* Quieter than the key above it: a direction, not something to read. */
+.org-hint {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
 .org-chart {
   display: block;
   margin: 0 auto;

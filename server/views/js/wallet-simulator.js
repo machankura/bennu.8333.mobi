@@ -1237,6 +1237,13 @@
         return el("div", { class: "org-chart-block" }, [
             el("div", { class: "org-chart-scroll" }, [svg]),
             chartKey(),
+            // The chart deliberately holds nothing technical, so it has to say
+            // where the technical half went: every card below carries a button
+            // that draws that one wallet's taproot tree.
+            el("p", {
+                class: "simulator-note org-hint",
+                text: "scroll down to view the taproot tree for each node",
+            }),
         ]);
     }
 
