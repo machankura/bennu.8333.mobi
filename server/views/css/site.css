@@ -508,3 +508,17 @@ img.app-shot {
 .simulator-compile .simulator-note {
   margin-top: 0.5rem;
 }
+
+.simulator-caveats {
+  margin-top: 1.5rem;
+}
+
+.simulator-caveats-list {
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.simulator-caveats-list li {
+  list-style: disc;
+  margin-bottom: 0.5rem;
+}

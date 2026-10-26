@@ -19,6 +19,23 @@ block content
 
         #wallet-simulator.simulator
 
+        p.simulator-caveats
+            strong What this does not model.
+            |  A policy that compiles is not a group that works. Four of Bennu's rules are nowhere in the script, and each is kept somewhere else:
+        ul.simulator-caveats-list
+            li
+                strong The ceremony.
+                |  The tree says 3 of 5 sign. It does not say that #[em every] member has to take part to make the key in the first place, which is the step a group actually gets stuck on.
+            li
+                strong The birth certificate.
+                |  A subgroup's parentage is a statement its parent's quorum signed, not a script. Nothing on-chain checks it; every honest client does.
+            li
+                strong The derivation.
+                |  Real addresses come off BIP86's unhardened tail under a public account step tweaked from the group's key. The simulator names a key and stops there.
+            li
+                strong The cap.
+                |  Bennu will not propose more than 100,000 sats in one spend on mainnet. That is a gate in the app, and the chain would happily take more.
+
         h2 The policy
 
         //- An iframe keeps materialize's styles off the playground's own inputs.
