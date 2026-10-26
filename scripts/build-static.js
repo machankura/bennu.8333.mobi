@@ -58,7 +58,9 @@ const links = [
     [/href="\/"/g, 'href="index.html"'],
     [/href="\/brand"/g, 'href="brand.html"'],
     [/href="\/faqs"/g, 'href="faqs.html"'],
-    [/href="\/visualize"/g, 'href="visualize.html"'],
+    // The home page's link carries an example tree in its fragment, so the
+    // pattern has to let one through rather than stopping at the closing quote.
+    [/href="\/visualize(#[^"]*)?"/g, 'href="visualize.html$1"'],
     [/(href|src)="\/static\//g, '$1="static/'],
 ]
 
