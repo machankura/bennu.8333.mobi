@@ -294,8 +294,26 @@ img.app-shot {
   font-size: 0.9rem;
 }
 
-.simulator-reset a {
-  text-decoration: underline !important;
+/* cancel, copy a link and start again are actions, not navigation, so they are
+   buttons like every other control in the panel rather than anchors to "#".
+   btn-flat without simulator-add's border keeps them lighter than the controls
+   that build something, and text-transform is undone because "COPY A LINK TO
+   THIS TREE" shouts for a thing nobody needs to be told twice. */
+.simulator .simulator-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 2rem;
+  line-height: 2rem;
+  padding: 0 0.5rem;
+  color: #000;
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.simulator .simulator-quiet:hover,
+.simulator .simulator-quiet:focus {
+  background-color: rgba(0, 0, 0, 0.07);
 }
 
 .simulator-node-fields {
@@ -543,18 +561,9 @@ img.app-shot {
   margin-bottom: 0.5rem;
 }
 
-.simulator-reset a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
 .simulator-icon {
   width: 1.05rem;
   height: 1.05rem;
   flex: none;
 }
 
-.simulator-reset-sep {
-  margin: 0 0.6rem;
-}

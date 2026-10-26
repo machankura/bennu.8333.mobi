@@ -595,7 +595,12 @@
                     "data-action": "confirm-add",
                     text: "add it",
                 }),
-                el("a", { href: "#", "data-action": "cancel-add", text: "cancel" }),
+                el("button", {
+                    class: "btn-flat simulator-quiet",
+                    type: "button",
+                    "data-action": "cancel-add",
+                    text: "cancel",
+                }),
             ]),
         ]);
     }
@@ -844,12 +849,11 @@
             renderNode(state.root),
             renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
-                el("a", { href: "#", "data-action": "copy-link" }, [
+                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
                     icon(ICON_LINK),
                     el("span", { text: "copy a link to this tree" }),
                 ]),
-                el("span", { class: "simulator-reset-sep", text: "·" }),
-                el("a", { href: "#", "data-action": "reset" }, [
+                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "reset" }, [
                     icon(ICON_CLEAR),
                     el("span", { text: "start again" }),
                 ]),
