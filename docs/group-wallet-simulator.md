@@ -7,7 +7,7 @@ delay. The node you select compiles to a miniscript policy, and that policy is
 handed to the compiler already on the page, which draws it as blocks and emits
 the descriptor.
 
-**Built**, phases 1-8 at the time of writing, one commit each. Written against
+**Built**, phases 1-10, one commit each. Written against
 the page as it stood at `081d00a`; where the build found the plan wrong the
 section says so, and it did twice — the compiler has no taproot option, and the
 alias table has to be filled or every compile errors.
