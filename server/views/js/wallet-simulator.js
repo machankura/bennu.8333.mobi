@@ -136,6 +136,90 @@
         return "or(99@" + self + ",1@" + guards + ")";
     }
 
+    // ---- sharing ----------------------------------------------------------
+
+    // A tree is the kind of thing somebody pastes into a chat to ask "is this
+    // what we want?", so it travels in the url. In the fragment rather than the
+    // query string: it never reaches a server, and there is no server here to
+    // reach.
+    //
+    // The shape is positional rather than an object per node, because the same
+    // tree as {"kind":"group","name":...} runs to several times the length and
+    // this ends up in a chat message.
+    function serialise(node) {
+        return [
+            node.kind === "member" ? 1 : 0,
+            node.name,
+            node.threshold,
+            node.members,
+            node.guarded ? 1 : 0,
+            node.delay,
+            node.children.map(serialise),
+        ];
+    }
+
+    // Anything out of range is clamped rather than rejected: a hand-edited
+    // fragment should not be able to produce a tree the editor itself refuses
+    // to make, and silently fixing it beats an error page over a toy.
+    function deserialise(row, parentGuarded) {
+        if (!Array.isArray(row) || row.length < 7) throw new Error("bad node");
+        var kind = row[0] === 1 ? "member" : "group";
+        var members = Math.max(1, parseInt(row[3], 10) || 1);
+        var node = makeNode(kind, String(row[1] || "Unnamed"), {
+            members: kind === "member" ? 1 : members,
+            threshold:
+                kind === "member" ? 1 : Math.min(members, Math.max(1, parseInt(row[2], 10) || 1)),
+            // Rule 2 again, this time against whatever a url claims: a child of
+            // a guarded parent is guarded whatever the fragment says.
+            guarded: parentGuarded ? true : row[4] === 1,
+            delay: Math.min(MAX_DELAY, Math.max(MIN_DELAY, parseInt(row[5], 10) || DEFAULT_DELAY)),
+        });
+        node.children = (row[6] || []).map(function (child) {
+            return deserialise(child, node.guarded);
+        });
+        return node;
+    }
+
+    function encode(text) {
+        var bytes = new TextEncoder().encode(text);
+        var binary = "";
+        bytes.forEach(function (b) {
+            binary += String.fromCharCode(b);
+        });
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function decode(text) {
+        var padded = text.replace(/-/g, "+").replace(/_/g, "/");
+        while (padded.length % 4) padded += "=";
+        var binary = atob(padded);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
+    }
+
+    function syncFragment() {
+        if (typeof history === "undefined" || !history.replaceState) return;
+        var fragment = state.root ? "#tree=" + encode(JSON.stringify(serialise(state.root))) : "";
+        history.replaceState(null, "", location.pathname + location.search + fragment);
+    }
+
+    // A fragment that will not parse is not worth an error: the page falls back
+    // to the empty state, which is where a reader with a broken link should be.
+    function readFragment() {
+        try {
+            var match = /(?:^|#|&)tree=([^&]+)/.exec(location.hash || "");
+            if (!match) return false;
+            state.root = deserialise(JSON.parse(decode(match[1])), false);
+            state.selectedId = state.root.id;
+            return true;
+        } catch (e) {
+            state.root = null;
+            state.selectedId = null;
+            return false;
+        }
+    }
+
     // ---- the bridge to the compiler ---------------------------------------
 
     // The only code that reaches into the iframe. Every id below belongs to the
@@ -614,6 +698,8 @@
             renderNode(state.root),
             renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
+                el("a", { href: "#", "data-action": "copy-link", text: "copy a link to this tree" }),
+                el("span", { text: " · " }),
                 el("a", { href: "#", "data-action": "reset", text: "start again" }),
             ]),
         ]);
@@ -625,6 +711,7 @@
 
         mount.innerHTML = "";
         mount.appendChild(state.root ? renderTree() : renderEmpty());
+        syncFragment();
     }
 
     // ---- actions ----------------------------------------------------------
@@ -671,6 +758,11 @@
                 target.getAttribute("data-names").split(",")
             );
             if (!ok) render();
+        },
+        "copy-link": function (target) {
+            syncFragment();
+            if (navigator.clipboard) navigator.clipboard.writeText(location.href);
+            target.textContent = "link copied";
         },
         "copy-policy": function (target) {
             var policy = target.getAttribute("data-policy");
@@ -777,6 +869,7 @@
         if (field === "name") {
             node.name = input.value;
             refreshPolicy(event.currentTarget);
+            syncFragment();
             return;
         }
 
@@ -788,6 +881,7 @@
             var duration = event.currentTarget.querySelector('[data-duration-for="' + node.id + '"]');
             if (duration) duration.textContent = blockDuration(node.delay);
             refreshPolicy(event.currentTarget);
+            syncFragment();
             return;
         }
 
@@ -812,6 +906,7 @@
         // The quorum is absent from the policy but named in the sentence under
         // it, so t and n have to reach that one too.
         if (node.id === state.selectedId) refreshPolicy(event.currentTarget);
+        syncFragment();
     }
 
     // ---- wiring -----------------------------------------------------------
@@ -821,6 +916,7 @@
         if (!mount) return;
         mount.addEventListener("click", onClick);
         mount.addEventListener("input", onInput);
+        readFragment();
         render();
     }
 
@@ -843,6 +939,8 @@
         ancestorsOf: ancestorsOf,
         policyFor: policyFor,
         compilerBridge: compilerBridge,
+        serialise: serialise,
+        deserialise: deserialise,
         MIN_DELAY: MIN_DELAY,
         MAX_DELAY: MAX_DELAY,
     };
