@@ -68,6 +68,74 @@
         });
     }
 
+    // ---- the policy -------------------------------------------------------
+
+    // One alias per node, derived from its name and made unique across the
+    // whole tree in a single pass, so the names in the policy are the names on
+    // the cards and two groups called "Treasury" do not collide.
+    function aliases() {
+        var used = {};
+        var map = {};
+        eachNode(state.root, function (node) {
+            var base = (node.name || "unnamed")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "_")
+                .replace(/^_+|_+$/g, "");
+            if (!base) base = "unnamed";
+            var name = base;
+            var n = 2;
+            while (used[name]) name = base + "_" + n++;
+            used[name] = true;
+            map[node.id] = name;
+        });
+        return map;
+    }
+
+    // Nearest parent first, up to the root. These are the groups holding a leaf
+    // over the node, each at the delay it chose for itself.
+    function ancestorsOf(id) {
+        var chain = [];
+        (function walk(node, trail) {
+            if (!node) return;
+            if (node.id === id) {
+                chain = trail.slice().reverse();
+                return;
+            }
+            node.children.forEach(function (child) {
+                walk(child, trail.concat([node]));
+            });
+        })(state.root, []);
+        return chain;
+    }
+
+    // What the chain is asked to enforce, and nothing more. The quorum is
+    // deliberately absent: a group is one taproot key on-chain, and writing
+    // thresh(t, ...) here would emit a policy the compiler draws perfectly and
+    // that is false. Phase 7 says so on the page.
+    function policyFor(node, map) {
+        map = map || aliases();
+        var self = "pk(" + map[node.id] + ")";
+        if (!node.guarded) return self;
+
+        var ancestors = ancestorsOf(node.id);
+        if (!ancestors.length) return self;
+
+        var leaves = ancestors.map(function (a) {
+            return "and(pk(" + map[a.id] + "),older(" + a.delay + "))";
+        });
+
+        // or() is binary, so several guardians nest rather than listing.
+        var guards = leaves[leaves.length - 1];
+        for (var i = leaves.length - 2; i >= 0; i--) {
+            guards = "or(" + leaves[i] + "," + guards + ")";
+        }
+
+        // The weights are not decoration. They tell the compiler that the owner
+        // is the common case and belongs on the key path, with the guardians in
+        // leaves; without them it may pick a shape Bennu would never produce.
+        return "or(99@" + self + ",1@" + guards + ")";
+    }
+
     // ---- words ------------------------------------------------------------
 
     // Blocks are ten minutes each, give or take. Everywhere Bennu shows a
@@ -371,9 +439,48 @@
         ]);
     }
 
+    function renderPolicy() {
+        var node = findNode(state.selectedId);
+        if (!node) return null;
+
+        var map = aliases();
+        var policy = policyFor(node, map);
+        var ancestors = node.guarded ? ancestorsOf(node.id) : [];
+
+        var rows = [
+            el("tr", {}, [
+                el("td", { class: "simulator-alias", text: map[node.id] }),
+                el("td", { text: node.name + " itself — the key path" }),
+            ]),
+        ];
+        ancestors.forEach(function (a) {
+            rows.push(
+                el("tr", {}, [
+                    el("td", { class: "simulator-alias", text: map[a.id] }),
+                    el("td", {
+                        text:
+                            a.name +
+                            ", after " +
+                            a.delay +
+                            " blocks (" +
+                            blockDuration(a.delay) +
+                            ")",
+                    }),
+                ])
+            );
+        });
+
+        return el("div", { class: "simulator-policy" }, [
+            el("h3", { text: "What the chain enforces for " + node.name }),
+            el("code", { class: "simulator-policy-text", text: policy }),
+            el("table", { class: "simulator-aliases" }, [el("tbody", {}, rows)]),
+        ]);
+    }
+
     function renderTree() {
         return el("div", { class: "simulator-tree" }, [
             renderNode(state.root),
+            renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
                 el("a", { href: "#", "data-action": "reset", text: "start again" }),
             ]),
@@ -482,9 +589,18 @@
         action(target);
     }
 
+    // The policy is derived from names and delays, which are edited in place, so
+    // it is swapped on its own rather than left stale until the next redraw.
+    function refreshPolicy(mount) {
+        var existing = mount.querySelector(".simulator-policy");
+        if (!existing) return;
+        var fresh = renderPolicy();
+        if (fresh) existing.replaceWith(fresh);
+    }
+
     // A full redraw on every keystroke would take the caret with it, so an edit
     // writes to state and patches only what it derives: the quorum sentence,
-    // the duration, and the other number when a rule pulls it.
+    // the duration, the policy, and the other number when a rule pulls it.
     function onInput(event) {
         var draftInput = event.target.closest("[data-draft]");
         if (draftInput && state.adding) {
@@ -516,6 +632,7 @@
 
         if (field === "name") {
             node.name = input.value;
+            refreshPolicy(event.currentTarget);
             return;
         }
 
@@ -526,6 +643,7 @@
         if (field === "delay") {
             var duration = event.currentTarget.querySelector('[data-duration-for="' + node.id + '"]');
             if (duration) duration.textContent = blockDuration(node.delay);
+            refreshPolicy(event.currentTarget);
             return;
         }
 
@@ -573,6 +691,9 @@
         findNode: findNode,
         quorumSentence: quorumSentence,
         blockDuration: blockDuration,
+        aliases: aliases,
+        ancestorsOf: ancestorsOf,
+        policyFor: policyFor,
         MIN_DELAY: MIN_DELAY,
         MAX_DELAY: MAX_DELAY,
     };

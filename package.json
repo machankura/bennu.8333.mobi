@@ -5,7 +5,8 @@
   "main": "bennu.js",
   "scripts": {
     "start": "node bennu.js",
-    "build": "node scripts/build-static.js"
+    "build": "node scripts/build-static.js",
+    "test": "node docs/scripts/policy-cases.js"
   },
   "repository": {
     "type": "git",

@@ -454,3 +454,42 @@ img.app-shot {
     padding: 0.6rem 0.6rem;
   }
 }
+
+.simulator-policy {
+  border-top: 2px solid #000;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.simulator-policy h3 {
+  font-size: 1.3rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.simulator-policy-text {
+  display: block;
+  padding: 0.8rem 1rem;
+  border: 2px solid #000;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  color: #000;
+  font-family: "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.simulator-aliases {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.simulator-aliases td {
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  border: none;
+}
+
+.simulator-alias {
+  font-family: "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
+  white-space: nowrap;
+}
