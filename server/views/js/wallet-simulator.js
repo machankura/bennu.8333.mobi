@@ -446,6 +446,40 @@
         return { type: "or", subs: [self, guards] };
     }
 
+    // ---- the taproot tree -------------------------------------------------
+
+    // The output the hierarchy produces, as bennu-kmp/docs/group-wallet-guardians.md
+    // specifies it: an internal key with one leaf per ancestor hanging off a
+    // merkle root. Four of its properties are decisions rather than defaults.
+    //
+    // The leaves form a *caterpillar*, not a balanced tree, and the nearest
+    // ancestor sits shallowest -- every ancestor can act at the same moment, so
+    // the shape costs nothing in policy and only in bytes, and the parent is
+    // the one most likely to ever spend. One ancestor is a tree of one leaf at
+    // depth 0, not a branch with a single child. And an unguarded wallet has no
+    // tree at all.
+    function taprootTreeFor(node, map) {
+        map = map || aliases();
+        var ancestors = node.guarded ? ancestorsOf(node.id) : [];
+        var k = ancestors.length;
+
+        return {
+            guarded: node.guarded && k > 0,
+            key: { alias: map[node.id], name: node.name },
+            leaves: ancestors.map(function (a, i) {
+                return {
+                    alias: map[a.id],
+                    name: a.name,
+                    delay: a.delay,
+                    // Down the spine one level per ancestor, except the last,
+                    // which shares the depth of the one before it: the final
+                    // branch carries two leaves, not one leaf and a stub.
+                    depth: i === k - 1 ? Math.max(0, k - 1) : i + 1,
+                };
+            }),
+        };
+    }
+
     // ---- words ------------------------------------------------------------
 
     // Blocks are ten minutes each, give or take. Everywhere Bennu shows a
@@ -848,6 +882,117 @@
         ]);
     }
 
+    var SVG_NS = "http://www.w3.org/2000/svg";
+
+    function svgEl(tag, attrs) {
+        var node = document.createElementNS(SVG_NS, tag);
+        Object.keys(attrs || {}).forEach(function (k) {
+            if (k === "text") node.textContent = attrs[k];
+            else node.setAttribute(k, attrs[k]);
+        });
+        return node;
+    }
+
+    function svgBox(x, y, label, kind) {
+        var g = svgEl("g", { class: "tap-" + kind });
+        g.appendChild(
+            svgEl("rect", { x: x - 42, y: y - 11, width: 84, height: 22, rx: 4 })
+        );
+        g.appendChild(
+            svgEl("text", { x: x, y: y + 4, "text-anchor": "middle", text: label })
+        );
+        return g;
+    }
+
+    function svgLine(x1, y1, x2, y2) {
+        return svgEl("line", { x1: x1, y1: y1, x2: x2, y2: y2 });
+    }
+
+    function shorten(text, n) {
+        return text.length > n ? text.slice(0, n - 1) + "…" : text;
+    }
+
+    // Drawn with strokes rather than the bordered cards the group tree uses, so
+    // the two trees on this page cannot be mistaken for each other: one is the
+    // groups, this is the script.
+    function renderTaprootDiagram(tree) {
+        var k = tree.leaves.length;
+        var rows = k <= 1 ? 2 : k + 1;
+        var rowY = function (r) {
+            return 26 + r * 46;
+        };
+        var LEFT = 74;
+        var MID = 160;
+        var RIGHT = 246;
+        var height = rowY(rows - 1) + 22;
+
+        var svg = svgEl("svg", {
+            class: "tap-tree",
+            viewBox: "0 0 320 " + height,
+            role: "img",
+            "aria-label":
+                "The taproot output for " +
+                tree.key.name +
+                ": an internal key with " +
+                k +
+                (k === 1 ? " guardian leaf" : " guardian leaves"),
+        });
+
+        var edges = svgEl("g", { class: "tap-edges" });
+        var boxes = svgEl("g", {});
+
+        // Q over the key path and the script root.
+        edges.appendChild(svgLine(MID, rowY(0) + 11, LEFT, rowY(1) - 11));
+        edges.appendChild(svgLine(MID, rowY(0) + 11, RIGHT, rowY(1) - 11));
+        boxes.appendChild(svgBox(MID, rowY(0), "Q", "out"));
+        boxes.appendChild(svgBox(LEFT, rowY(1), "P", "key"));
+
+        if (k === 1) {
+            boxes.appendChild(
+                svgBox(RIGHT, rowY(1), shorten(tree.leaves[0].alias, 11), "leaf")
+            );
+        } else {
+            // The spine: a branch per level, with a leaf hanging off each, and
+            // the last branch carrying two leaves rather than one.
+            for (var r = 1; r <= k - 1; r++) {
+                boxes.appendChild(
+                    svgEl("circle", { cx: RIGHT, cy: rowY(r), r: 5, class: "tap-branch" })
+                );
+                edges.appendChild(svgLine(RIGHT, rowY(r) + 5, MID, rowY(r + 1) - 11));
+                edges.appendChild(svgLine(RIGHT, rowY(r) + 5, RIGHT, rowY(r + 1) - (r === k - 1 ? 11 : 5)));
+            }
+            for (var i = 0; i < k - 1; i++) {
+                boxes.appendChild(
+                    svgBox(MID, rowY(2 + i), shorten(tree.leaves[i].alias, 11), "leaf")
+                );
+            }
+            boxes.appendChild(
+                svgBox(RIGHT, rowY(k), shorten(tree.leaves[k - 1].alias, 11), "leaf")
+            );
+        }
+
+        svg.appendChild(edges);
+        svg.appendChild(boxes);
+        return svg;
+    }
+
+    function renderTaproot(node, map) {
+        var tree = taprootTreeFor(node, map);
+        if (!tree.guarded) return null;
+
+        return el("div", { class: "simulator-taproot" }, [
+            el("h3", { text: "The taproot output" }),
+            el("p", {
+                class: "simulator-note",
+                text:
+                    "One leaf per group above " +
+                    node.name +
+                    ", nearest first. The leaves lean to one side rather than balancing: every guardian can act at the same moment, so the shape costs nothing but bytes.",
+            }),
+            renderTaprootDiagram(tree),
+        ]);
+    }
+
     function renderPolicy() {
         var node = findNode(state.selectedId);
         if (!node) return null;
@@ -885,6 +1030,7 @@
             el("table", { class: "simulator-aliases" }, [el("tbody", {}, rows)]),
             renderOmission(node, map),
             renderCompileControl(node, policy, map),
+            renderTaproot(node, map),
         ]);
     }
 
@@ -1275,6 +1421,7 @@
         ancestorsOf: ancestorsOf,
         policyFor: policyFor,
         policyAstFor: policyAstFor,
+        taprootTreeFor: taprootTreeFor,
         compilerBridge: compilerBridge,
         serialise: serialise,
         deserialise: deserialise,

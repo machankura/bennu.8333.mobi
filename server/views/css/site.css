@@ -593,3 +593,52 @@ img.app-shot {
 .simulator-confirm .simulator-note {
   margin: 0;
 }
+
+.simulator-taproot {
+  border-top: 2px solid #000;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.simulator-taproot h3 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.tap-tree {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  margin: 1rem auto 0;
+  height: auto;
+  font-size: 11px;
+}
+
+.tap-edges line {
+  stroke: #000;
+  stroke-width: 1.5;
+}
+
+.tap-tree rect {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.5;
+}
+
+.tap-tree text {
+  fill: #000;
+  font-family: "Roboto Mono", "DejaVu Sans Mono", Consolas, monospace;
+}
+
+.tap-branch {
+  fill: #000;
+}
+
+/* The output key is what the address is, so it is the one filled box. */
+.tap-out rect {
+  fill: #000;
+}
+
+.tap-out text {
+  fill: #fff;
+}
