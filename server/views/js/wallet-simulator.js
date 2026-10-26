@@ -970,7 +970,9 @@
             "aria-label":
                 "The taproot output for " +
                 tree.key.name +
-                ": an internal key with " +
+                ": the key " +
+                tree.key.alias +
+                " with " +
                 k +
                 (k === 1 ? " guardian leaf" : " guardian leaves"),
         });
@@ -982,7 +984,7 @@
         edges.appendChild(svgLine(MID, rowY(0) + 11, LEFT, rowY(1) - 11));
         edges.appendChild(svgLine(MID, rowY(0) + 11, RIGHT, rowY(1) - 11));
         boxes.appendChild(svgBox(MID, rowY(0), "Q", "out"));
-        boxes.appendChild(svgBox(LEFT, rowY(1), "P", "key"));
+        boxes.appendChild(svgBox(LEFT, rowY(1), shorten(tree.key.alias, 11), "key"));
 
         if (k === 1) {
             boxes.appendChild(
@@ -1016,18 +1018,22 @@
     // The diagram labelled a box P and nothing on the page said what it was.
     // It is the internal key: the owner's own key walked to this one address,
     // and the key path is the ordinary way the wallet spends.
-    function renderTaprootInternalKey(node) {
+    function renderTaprootInternalKey(node, map) {
+        map = map || aliases();
+        var alias = map[node.id];
         var whose =
             node.kind === "member"
                 ? node.name + " holds alone"
                 : "a quorum of " + node.name + " co-operates to use";
         return el("p", { class: "simulator-note tap-key-note" }, [
-            el("strong", { text: "P is the key this wallet spends with. " }),
+            el("strong", { text: alias + " is the key this wallet spends with. " }),
             el("span", {
                 text:
-                    "It is the key " +
+                    "The same " +
+                    alias +
+                    " as in the policy above — the key " +
                     whose +
-                    ", walked down to this one address — every address has its own P. Spending with it is the key path: one signature, no leaf touched, nothing about the tree disclosed. It is also not what anyone sees; P is tweaked by the tree to make Q.",
+                    ", walked down to this one address, and every address has its own. Taproot calls it the internal key, or P. Spending with it is the key path: one signature, no leaf touched, nothing about the tree disclosed. It is also not what anyone sees, because it is tweaked by the tree to make Q.",
             }),
         ]);
     }
@@ -1147,7 +1153,7 @@
         edges.appendChild(svgLine(160, 37, 160, 59));
         svg.appendChild(edges);
         svg.appendChild(svgBox(160, 26, "Q", "out"));
-        svg.appendChild(svgBox(160, 70, "P", "key"));
+        svg.appendChild(svgBox(160, 70, shorten(aliases()[node.id], 11), "key"));
 
         return el("div", { class: "simulator-taproot" }, [
             el("h3", { text: "The taproot output" }),
@@ -1184,7 +1190,7 @@
                     ", nearest first. The leaves lean to one side rather than balancing: every guardian can act at the same moment, so the shape costs nothing but bytes.",
             }),
             renderTaprootDiagram(tree),
-            renderTaprootInternalKey(node),
+            renderTaprootInternalKey(node, map),
             renderTaprootKey(node),
             renderTaprootCosts(tree),
             renderTaprootReveals(node, tree),
