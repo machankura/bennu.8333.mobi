@@ -103,14 +103,22 @@
         var used = {};
         var map = {};
         eachNode(state.root, function (node) {
-            var base = (node.name || "unnamed")
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "_")
-                .replace(/^_+|_+$/g, "");
+            // The name is the one on the card: capitals, dots and all. It used
+            // to be squashed to a lowercase identifier because the bdk-cli
+            // compiler's alias table had to parse it; nothing parses it now, so
+            // the only characters still replaced are the policy's own
+            // punctuation and whitespace, which would otherwise break the
+            // string the name sits inside.
+            var base = (node.name || "")
+                .trim()
+                .replace(/[(),@]+/g, "-")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-+|-+$/g, "");
             if (!base) base = "unnamed";
             var name = base;
             var n = 2;
-            while (used[name]) name = base + "_" + n++;
+            while (used[name]) name = base + "-" + n++;
             used[name] = true;
             map[node.id] = name;
         });
@@ -751,14 +759,21 @@
         return node;
     }
 
-    function svgBox(x, y, label, kind) {
+    var BOX_W = 132;
+    var BOX_CHARS = 18;
+
+    function svgBox(x, y, label, kind, full) {
         var g = svgEl("g", { class: "tap-" + kind });
         g.appendChild(
-            svgEl("rect", { x: x - 42, y: y - 11, width: 84, height: 22, rx: 4 })
+            svgEl("rect", { x: x - BOX_W / 2, y: y - 11, width: BOX_W, height: 22, rx: 4 })
         );
         g.appendChild(
-            svgEl("text", { x: x, y: y + 4, "text-anchor": "middle", text: label })
+            svgEl("text", { x: x, y: y + 4, "text-anchor": "middle", text: shorten(label, BOX_CHARS) })
         );
+        // A name longer than the box still reads in full on hover, and in the
+        // table under the diagram, which lists every one of them untruncated.
+        if (full && full !== label) g.appendChild(svgEl("title", { text: full }));
+        else g.appendChild(svgEl("title", { text: label }));
         return g;
     }
 
@@ -779,14 +794,14 @@
         var rowY = function (r) {
             return 26 + r * 46;
         };
-        var LEFT = 74;
-        var MID = 160;
-        var RIGHT = 246;
+        var LEFT = 78;
+        var MID = 210;
+        var RIGHT = 342;
         var height = rowY(rows - 1) + 22;
 
         var svg = svgEl("svg", {
             class: "tap-tree",
-            viewBox: "0 0 320 " + height,
+            viewBox: "0 0 420 " + height,
             role: "img",
             "aria-label":
                 "The taproot output for " +
@@ -805,11 +820,11 @@
         edges.appendChild(svgLine(MID, rowY(0) + 11, LEFT, rowY(1) - 11));
         edges.appendChild(svgLine(MID, rowY(0) + 11, RIGHT, rowY(1) - 11));
         boxes.appendChild(svgBox(MID, rowY(0), "Q", "out"));
-        boxes.appendChild(svgBox(LEFT, rowY(1), shorten(tree.key.alias, 11), "key"));
+        boxes.appendChild(svgBox(LEFT, rowY(1), tree.key.alias, "key"));
 
         if (k === 1) {
             boxes.appendChild(
-                svgBox(RIGHT, rowY(1), shorten(tree.leaves[0].alias, 11), "leaf")
+                svgBox(RIGHT, rowY(1), tree.leaves[0].alias, "leaf")
             );
         } else {
             // The spine: a branch per level, with a leaf hanging off each, and
@@ -823,11 +838,11 @@
             }
             for (var i = 0; i < k - 1; i++) {
                 boxes.appendChild(
-                    svgBox(MID, rowY(2 + i), shorten(tree.leaves[i].alias, 11), "leaf")
+                    svgBox(MID, rowY(2 + i), tree.leaves[i].alias, "leaf")
                 );
             }
             boxes.appendChild(
-                svgBox(RIGHT, rowY(k), shorten(tree.leaves[k - 1].alias, 11), "leaf")
+                svgBox(RIGHT, rowY(k), tree.leaves[k - 1].alias, "leaf")
             );
         }
 
@@ -966,15 +981,15 @@
     function renderTaprootBare(node) {
         var svg = svgEl("svg", {
             class: "tap-tree",
-            viewBox: "0 0 320 96",
+            viewBox: "0 0 420 96",
             role: "img",
             "aria-label": "The taproot output for " + node.name + ": a key with no script tree",
         });
         var edges = svgEl("g", { class: "tap-edges" });
-        edges.appendChild(svgLine(160, 37, 160, 59));
+        edges.appendChild(svgLine(210, 37, 210, 59));
         svg.appendChild(edges);
-        svg.appendChild(svgBox(160, 26, "Q", "out"));
-        svg.appendChild(svgBox(160, 70, shorten(aliases()[node.id], 11), "key"));
+        svg.appendChild(svgBox(210, 26, "Q", "out"));
+        svg.appendChild(svgBox(210, 70, aliases()[node.id], "key"));
 
         return el("div", { class: "simulator-taproot" }, [
             el("h3", { text: "The taproot output" }),

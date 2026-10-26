@@ -47,7 +47,7 @@ console.log("policy cases");
 // leaf over it, and on-chain it is one key like any other wallet.
 {
     const root = tree(() => {});
-    check("root is a bare key", S.policyFor(root), "pk(root)");
+    check("root is a bare key", S.policyFor(root), "pk(Root)");
 }
 
 // One guardian: the owner on the key path, the parent in a leaf behind its own
@@ -62,7 +62,7 @@ console.log("policy cases");
     check(
         "one guardian",
         S.policyFor(child),
-        "or(pk(child),and(pk(root),older(12)))"
+        "or(pk(Child),and(pk(Root),older(12)))"
     );
 }
 
@@ -80,7 +80,7 @@ console.log("policy cases");
     check(
         "two guardians keep their own delays",
         S.policyFor(grandchild),
-        "or(pk(leaf),or(and(pk(mid),older(12)),and(pk(root),older(144))))"
+        "or(pk(Leaf),or(and(pk(Mid),older(12)),and(pk(Root),older(144))))"
     );
 }
 
@@ -98,7 +98,7 @@ console.log("policy cases");
     check(
         "member wallet under a guarded group",
         S.policyFor(wallet),
-        "or(pk(alice),or(and(pk(treasury),older(6)),and(pk(root),older(144))))"
+        "or(pk(Alice),or(and(pk(Treasury),older(6)),and(pk(Root),older(144))))"
     );
 }
 
@@ -129,7 +129,7 @@ console.log("policy cases");
     });
     const map = S.aliases();
     check("colliding names get distinct aliases", map[a.id] !== map[b.id], true);
-    check("the second is suffixed", map[b.id], "treasury_2");
+    check("the second is suffixed", map[b.id], "Treasury-2");
 }
 
 // The delay boundaries BIP68 and Bennu allow.
@@ -140,9 +140,31 @@ console.log("policy cases");
         r.delay = S.MIN_DELAY;
         r.children.push(child);
     });
-    check("minimum delay", S.policyFor(child), "or(pk(child),and(pk(root),older(6)))");
+    check("minimum delay", S.policyFor(child), "or(pk(Child),and(pk(Root),older(6)))");
     S.state.root.delay = S.MAX_DELAY;
-    check("maximum delay", S.policyFor(child), "or(pk(child),and(pk(root),older(65535)))");
+    check("maximum delay", S.policyFor(child), "or(pk(Child),and(pk(Root),older(65535)))");
+}
+
+// The names used to be squashed into lowercase identifiers for a compiler that
+// is no longer on the page. They are the names on the cards now, and only the
+// policy's own punctuation is still replaced.
+console.log("name cases");
+{
+    const named = (name) => {
+        S.state.root = null;
+        S.state.nextId = 1;
+        const root = S.makeNode("group", name);
+        S.state.root = root;
+        return S.aliases()[root.id];
+    };
+    check("dots survive", named("v1.2"), "v1.2");
+    check("a hostname survives whole", named("bennu.8333.mobi"), "bennu.8333.mobi");
+    check("capitals survive", named("Treasury"), "Treasury");
+    check("an apostrophe survives", named("Dad's wallet"), "Dad's-wallet");
+    check("spaces cannot sit inside pk()", named("Sub Group"), "Sub-Group");
+    check("nor can the policy's own brackets", named("Group (old)"), "Group-old");
+    check("nor its commas", named("A, B"), "A-B");
+    check("a blank name still gets one", named("   "), "unnamed");
 }
 
 console.log("taproot size cases");
