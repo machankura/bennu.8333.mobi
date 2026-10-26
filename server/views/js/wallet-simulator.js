@@ -26,7 +26,6 @@
         nextId: 1,
         adding: null, // { parentId, kind, draft }
         removing: null, // node id awaiting confirmation
-        view: "build", // "build" or "chart"
         selectedId: null,
     };
 
@@ -1112,10 +1111,11 @@
 
     // ---- the org chart ----------------------------------------------------
 
-    // A read-only look at the shape and nothing else: who is under whom, and
-    // how many have to agree. No policy, no script, no blocks, no bytes. The
-    // build view is for working out what a group should be; this is for
-    // showing someone what it is.
+    // The shape and nothing else, drawn above the cards that build it: who is
+    // under whom, and how many have to agree. No policy, no script, no blocks,
+    // no bytes. The cards below say what every one of those is for a single
+    // node, which is the detail you need while editing and the wrong thing to
+    // look at when you want the whole org at once.
     var ORG_W = 150;
     var ORG_H = 46;
     var ORG_HGAP = 18;
@@ -1224,44 +1224,9 @@
         scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
     }
 
-    function renderViewToggle() {
-        var chart = state.view === "chart";
-        return el("div", { class: "simulator-views" }, [
-            el("button", {
-                class: "btn-flat simulator-quiet" + (chart ? "" : " is-on"),
-                type: "button",
-                "data-action": "view-build",
-                text: "build",
-            }),
-            el("button", {
-                class: "btn-flat simulator-quiet" + (chart ? " is-on" : ""),
-                type: "button",
-                "data-action": "view-chart",
-                text: "org chart",
-            }),
-        ]);
-    }
-
-    function renderChartView() {
-        return el("div", { class: "simulator-tree" }, [
-            renderViewToggle(),
-            el("p", {
-                class: "simulator-note center",
-                text: "Who answers to whom, and how many have to agree. Nothing else.",
-            }),
-            renderOrgChart(),
-            el("div", { class: "center simulator-reset" }, [
-                el("button", { class: "btn-flat simulator-quiet", type: "button", "data-action": "copy-link" }, [
-                    icon(ICON_LINK),
-                    el("span", { text: "copy a link to this tree" }),
-                ]),
-            ]),
-        ]);
-    }
-
     function renderTree() {
         return el("div", { class: "simulator-tree" }, [
-            renderViewToggle(),
+            renderOrgChart(),
             renderNode(state.root),
             renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
@@ -1282,9 +1247,7 @@
         if (!mount) return;
 
         mount.innerHTML = "";
-        mount.appendChild(
-            state.root ? (state.view === "chart" ? renderChartView() : renderTree()) : renderEmpty()
-        );
+        mount.appendChild(state.root ? renderTree() : renderEmpty());
         centreChart();
         syncFragment();
     }
@@ -1295,14 +1258,6 @@
         "add-root": function () {
             state.root = makeNode("group", "Group");
             state.selectedId = state.root.id;
-            render();
-        },
-        "view-build": function () {
-            state.view = "build";
-            render();
-        },
-        "view-chart": function () {
-            state.view = "chart";
             render();
         },
         show: function (target) {
@@ -1467,9 +1422,24 @@
         if (fresh) existing.replaceWith(fresh);
     }
 
+    // The chart carries two things a card can change while you type: the name
+    // on the box and the "t of n sign" under it. Swapping the whole drawing is
+    // cheaper than finding the one text node, and it cannot go out of step.
+    function refreshChart(mount) {
+        var existing = mount.querySelector(".org-chart-scroll");
+        if (!existing || !state.root) return;
+        var left = existing.scrollLeft;
+        existing.replaceWith(renderOrgChart());
+        // Redrawn in place, so hold the sideways scroll where the reader put
+        // it rather than recentring under them mid-keystroke.
+        var fresh = mount.querySelector(".org-chart-scroll");
+        if (fresh) fresh.scrollLeft = left;
+    }
+
     // A full redraw on every keystroke would take the caret with it, so an edit
     // writes to state and patches only what it derives: the quorum sentence,
-    // the duration, the policy, and the other number when a rule pulls it.
+    // the duration, the policy, the chart above, and the other number when a
+    // rule pulls it.
     function onInput(event) {
         var draftInput = event.target.closest("[data-draft]");
         if (draftInput && state.adding) {
@@ -1501,6 +1471,7 @@
 
         if (field === "name") {
             node.name = input.value;
+            refreshChart(event.currentTarget);
             refreshPolicy(event.currentTarget);
             syncFragment();
             return;
@@ -1537,7 +1508,8 @@
         if (sentence) sentence.textContent = quorumSentence(node);
 
         // The quorum is absent from the policy but named in the sentence under
-        // it, so t and n have to reach that one too.
+        // it, and on the chart's boxes, so t and n have to reach those too.
+        refreshChart(event.currentTarget);
         if (node.id === state.selectedId) refreshPolicy(event.currentTarget);
         syncFragment();
     }
@@ -1549,6 +1521,12 @@
         if (!mount) return;
         mount.addEventListener("click", onClick);
         mount.addEventListener("input", onInput);
+
+        // Turning a phone sideways changes how much of the chart fits, and the
+        // half it should keep is the middle, where the root is.
+        if (typeof window !== "undefined" && window.addEventListener) {
+            window.addEventListener("resize", centreChart);
+        }
 
         // A link carries a tree, and the whole point of sending one is the
         // picture it makes: so a tree that arrived in the url compiles itself

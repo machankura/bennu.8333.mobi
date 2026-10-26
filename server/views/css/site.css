@@ -669,34 +669,16 @@ img.app-shot {
   font-size: 0.8rem;
 }
 
-/* ---- the view toggle and the org chart --------------------------------- */
+/* ---- the org chart ----------------------------------------------------- */
 
-/* Two quiet buttons rather than a switch: the names say what each view is, and
-   whichever is on reads as pressed. Pushed to the top of the panel so the
-   choice is the first thing there, above the tree it applies to. */
-.simulator-views {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
-}
-
-.simulator .simulator-views .is-on {
-  background-color: #000;
-  color: #fff;
-}
-
-.simulator .simulator-views .is-on:hover,
-.simulator .simulator-views .is-on:focus {
-  background-color: #000;
-}
-
-/* A wide org chart scrolls sideways rather than shrinking: the point of the
-   view is that it can be read at a glance, and type scaled to fit a phone
-   cannot be. */
+/* A wide org chart scrolls sideways rather than shrinking: the point of it is
+   that it can be read at a glance, and type scaled to fit a phone cannot be.
+   The rule under it separates the overview from the cards that edit it. */
 .org-chart-scroll {
   overflow-x: auto;
-  margin-top: 1rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #000;
 }
 
 .org-chart {
