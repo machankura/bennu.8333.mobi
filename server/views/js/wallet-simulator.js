@@ -799,9 +799,13 @@
                     name: kind === "member" ? "Member" : "Subgroup",
                     threshold: 2,
                     members: 3,
-                    // A member wallet is only worth making here if a group
-                    // guards it, and a guarded parent leaves no choice at all.
-                    guarded: kind === "member" ? true : parent.guarded,
+                    // Guarded by default, for every wallet that can be. A
+                    // group guarding what it makes is the arrangement Bennu is
+                    // for, and under an unguarded parent this is still a
+                    // checkbox rather than a rule. Under a guarded one there
+                    // was never a choice, and the root cannot be guarded at
+                    // all: nothing stands above it to hold a leaf.
+                    guarded: true,
                     delay: parent.delay,
                 },
             };

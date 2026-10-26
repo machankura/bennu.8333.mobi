@@ -317,8 +317,10 @@ img.app-shot {
 
 /* Materialize paints every label #9e9e9e. These say what each number means, so
    they have to be read: that grey is 2.8:1 on white and was 1.3:1 on flame,
-   which is why they looked washed out before the panel went white. */
-.simulator-field > span {
+   which is why they looked washed out before the panel went white. The
+   checkbox's label is a whole sentence and had the same grey on it. */
+.simulator-field > span,
+.simulator-check span {
   color: #333;
 }
 
@@ -423,6 +425,14 @@ img.app-shot {
   width: 1.1rem;
   height: 1.1rem;
   margin-top: 0.1rem;
+}
+
+/* ...and it still draws its own tick on the label beside it, which showed as a
+   second tick once the box started out checked. */
+.simulator-check input[type="checkbox"] + span::before,
+.simulator-check input[type="checkbox"] + span::after {
+  display: none;
+  content: none;
 }
 
 .simulator-delay {
