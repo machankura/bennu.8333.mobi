@@ -4,8 +4,14 @@ Replacing the vendored bdk-cli playground under `/playground` with
 [bdk-wasm](https://github.com/bitcoindevkit/bdk-wasm), the Bitcoin Dev Kit
 compiled to WebAssembly and published as `@bitcoindevkit/bdk-wallet-web`.
 
-**Not built.** This is the plan, written against the page at `01e93d9` and
-against bdk-wasm at `73cb4df` (crate version 0.3.0).
+**Shelved**, 2026-10-26, before any of it was built. Not abandoned and not
+rejected on its merits — parked. The page works, and nothing here is urgent.
+
+Read the next section before picking it up again: the finding that bdk-wasm
+cannot compile a policy is the whole reason this plan is shaped the way it is,
+and it is the first thing that would go stale. Written against the page at
+`01e93d9` and against bdk-wasm at `73cb4df` (crate version 0.3.0), which is a
+young enough library that both ends of that will have moved.
 
 ---
 
