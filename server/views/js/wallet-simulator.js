@@ -664,6 +664,19 @@
             );
         }
 
+        // Clicking the card selects it too, but on a tree of any size the panel
+        // that shows the selection is well below the fold, so a card click can
+        // look like it did nothing. This says what the selection is for.
+        buttons.push(
+            el("button", {
+                class: "btn black simulator-show",
+                type: "button",
+                "data-action": "show",
+                "data-id": node.id,
+                text: "taproot tree",
+            })
+        );
+
         // The root has no remove: it is the whole tree, and "start again"
         // already says that in words.
         if (node !== state.root) {
@@ -1129,6 +1142,19 @@
             state.root = makeNode("group", "Group");
             state.selectedId = state.root.id;
             render();
+        },
+        show: function (target) {
+            state.selectedId = target.getAttribute("data-id");
+            render();
+            // render() has just replaced the panel, so it is found after.
+            // Scrolled to only when it is not already in front of you: moving
+            // the page under someone who can see the answer already is its own
+            // kind of rude.
+            var panel = document.querySelector(".simulator-taproot");
+            if (!panel) return;
+            var box = panel.getBoundingClientRect();
+            var visible = box.top >= 0 && box.top < window.innerHeight - 80;
+            if (!visible) panel.scrollIntoView({ block: "center" });
         },
         select: function (target) {
             state.selectedId = target.getAttribute("data-id");

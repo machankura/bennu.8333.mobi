@@ -659,3 +659,12 @@ img.app-shot {
 .tap-key-note {
   margin-top: 1rem;
 }
+
+/* Filled, where the controls beside it are outlined: the tree is built in order
+   to be looked at. Sized to the row so it does not tower over the rest. */
+.simulator .simulator-show {
+  height: 2rem;
+  line-height: 2rem;
+  padding: 0 0.9rem;
+  font-size: 0.8rem;
+}
