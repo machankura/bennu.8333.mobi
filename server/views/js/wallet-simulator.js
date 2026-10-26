@@ -1114,9 +1114,45 @@
         ]);
     }
 
+    // No leaves at all: Q is P under BIP86's empty tweak. The drawing is a key
+    // with nothing hanging off it, and the absence is the content -- resist
+    // putting an empty box where the tree would be.
+    function renderTaprootBare(node) {
+        var svg = svgEl("svg", {
+            class: "tap-tree",
+            viewBox: "0 0 320 96",
+            role: "img",
+            "aria-label": "The taproot output for " + node.name + ": a key with no script tree",
+        });
+        var edges = svgEl("g", { class: "tap-edges" });
+        edges.appendChild(svgLine(160, 37, 160, 59));
+        svg.appendChild(edges);
+        svg.appendChild(svgBox(160, 26, "Q", "out"));
+        svg.appendChild(svgBox(160, 70, "P", "key"));
+
+        return el("div", { class: "simulator-taproot" }, [
+            el("h3", { text: "The taproot output" }),
+            el("p", {
+                class: "simulator-note",
+                text:
+                    "No tree. Nothing stands above " +
+                    node.name +
+                    ", so no group holds a leaf over it, and there is nothing for the key to commit to.",
+            }),
+            svg,
+            el("p", { class: "simulator-note tap-key-note" }, [
+                el("strong", { text: "There is nothing to hide here because there is nothing to reveal. " }),
+                el("span", {
+                    text:
+                        "A guarded wallet is indistinguishable from this one until a guardian acts — that is the whole point of the shape. Add a guarded group under this one and the tree appears.",
+                }),
+            ]),
+        ]);
+    }
+
     function renderTaproot(node, map) {
         var tree = taprootTreeFor(node, map);
-        if (!tree.guarded) return null;
+        if (!tree.guarded) return renderTaprootBare(node);
 
         return el("div", { class: "simulator-taproot" }, [
             el("h3", { text: "The taproot output" }),
