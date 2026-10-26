@@ -191,6 +191,55 @@ console.log("block tree cases");
     check("an unguarded root is a single pk block", JSON.stringify(S.policyAstFor(root)), JSON.stringify({ type: "pk", alias: "root" }));
 }
 
+// The leaf is <32-byte key> OP_CHECKSIGVERIFY <delay> OP_CHECKSEQUENCEVERIFY.
+// bennu-kmp's guardians note states 36 bytes at a delay of 12; the rest follows
+// from minimal CScriptNum pushes, and the whole point is that the number a
+// parent types changes the size of the script.
+console.log("taproot size cases");
+check("delay 6 -> 36 bytes", S.leafBytes(6), 36);
+check("delay 12 -> 36 bytes (the note's number)", S.leafBytes(12), 36);
+check("delay 16 is still one opcode", S.leafBytes(16), 36);
+check("delay 17 needs a push", S.leafBytes(17), 37);
+check("delay 127", S.leafBytes(127), 37);
+check("delay 128 needs a sign byte", S.leafBytes(128), 38);
+check("delay 144", S.leafBytes(144), 38);
+check("delay 32767", S.leafBytes(32767), 38);
+check("delay 32768", S.leafBytes(32768), 39);
+check("delay 65535, the ceiling", S.leafBytes(65535), 39);
+
+check("a lone leaf needs no path", S.controlBlockBytes(0), 33);
+check("one level", S.controlBlockBytes(1), 65);
+check("two levels", S.controlBlockBytes(2), 97);
+
+// The caterpillar: nearest ancestor shallowest, and the last two leaves share
+// a depth because the final branch carries both.
+console.log("taproot shape cases");
+{
+    const depthsFor = (n) => {
+        S.state.root = null;
+        S.state.nextId = 1;
+        const root = S.makeNode("group", "Root");
+        S.state.root = root;
+        let cur = root;
+        for (let i = 0; i < n; i++) {
+            const child = Object.assign(S.makeNode("group", "G" + i), { guarded: true });
+            cur.children.push(child);
+            cur = child;
+        }
+        return S.taprootTreeFor(cur);
+    };
+    check("no ancestors is no tree", depthsFor(0).guarded, false);
+    check("one ancestor sits at depth 0", depthsFor(1).leaves.map(l => l.depth).join(","), "0");
+    check("two share depth 1", depthsFor(2).leaves.map(l => l.depth).join(","), "1,1");
+    check("three are 1,2,2", depthsFor(3).leaves.map(l => l.depth).join(","), "1,2,2");
+    check("four are 1,2,3,3", depthsFor(4).leaves.map(l => l.depth).join(","), "1,2,3,3");
+    check(
+        "the nearest ancestor is shallowest",
+        depthsFor(4).leaves[0].depth < depthsFor(4).leaves[3].depth,
+        true
+    );
+}
+
 console.log("duration cases");
 check("6 blocks", S.blockDuration(6), "about 1 hour");
 check("12 blocks", S.blockDuration(12), "about 2 hours");

@@ -458,6 +458,41 @@
     // the one most likely to ever spend. One ancestor is a tree of one leaf at
     // depth 0, not a branch with a single child. And an unguarded wallet has no
     // tree at all.
+    // A delay is pushed as a minimal CScriptNum: 1 to 16 are the single opcodes
+    // OP_1..OP_16, and anything larger is a push of its little-endian bytes,
+    // with a zero byte appended when the top bit would otherwise read as a
+    // sign. So the number a parent types changes the size of the script.
+    function scriptNumBytes(n) {
+        var bytes = 0;
+        var v = n;
+        var last = 0;
+        while (v > 0) {
+            last = v & 0xff;
+            bytes++;
+            v = Math.floor(v / 256);
+        }
+        if (last & 0x80) bytes++;
+        return bytes;
+    }
+
+    function pushBytes(n) {
+        if (n >= 1 && n <= 16) return 1;
+        return 1 + scriptNumBytes(n);
+    }
+
+    // <L> OP_CHECKSIGVERIFY <d> OP_CHECKSEQUENCEVERIFY: a 32-byte x-only key
+    // behind its push opcode, one byte each for the two opcodes, and the delay.
+    // 36 bytes at a delay of 12, which is what the guardians note states.
+    function leafBytes(delay) {
+        return 33 + 1 + pushBytes(delay) + 1;
+    }
+
+    // BIP341: one control byte, the 32-byte internal key, and a 32-byte sibling
+    // hash per level. A lone leaf needs no path at all.
+    function controlBlockBytes(depth) {
+        return 33 + 32 * depth;
+    }
+
     function taprootTreeFor(node, map) {
         map = map || aliases();
         var ancestors = node.guarded ? ancestorsOf(node.id) : [];
@@ -475,6 +510,8 @@
                     // which shares the depth of the one before it: the final
                     // branch carries two leaves, not one leaf and a stub.
                     depth: i === k - 1 ? Math.max(0, k - 1) : i + 1,
+                    script: leafBytes(a.delay),
+                    controlBlock: controlBlockBytes(i === k - 1 ? Math.max(0, k - 1) : i + 1),
                 };
             }),
         };
@@ -976,6 +1013,41 @@
         return svg;
     }
 
+    // Every number here follows from something the card above can be typed
+    // into, which is the reason to show them at all.
+    function renderTaprootCosts(tree) {
+        var rows = [
+            el("tr", {}, [
+                el("th", { text: "leaf" }),
+                el("th", { text: "waits" }),
+                el("th", { text: "depth" }),
+                el("th", { text: "script" }),
+                el("th", { text: "control block" }),
+            ]),
+        ];
+
+        tree.leaves.forEach(function (leaf) {
+            rows.push(
+                el("tr", {}, [
+                    el("td", { class: "simulator-alias", text: leaf.alias }),
+                    el("td", { text: leaf.delay + " blocks" }),
+                    el("td", { text: String(leaf.depth) }),
+                    el("td", { text: leaf.script + " bytes" }),
+                    el("td", { text: leaf.controlBlock + " bytes" }),
+                ])
+            );
+        });
+
+        return el("div", {}, [
+            el("table", { class: "simulator-aliases tap-costs" }, [el("tbody", {}, rows)]),
+            el("p", {
+                class: "simulator-note",
+                text:
+                    "The delay is part of the script, so changing it changes the script's size: 36 bytes up to 16 blocks, 39 at 65,535. The control block is what a guardian has to publish to prove its leaf was in the tree, and it grows by 32 bytes a level — which is the only thing the lopsided shape costs.",
+            }),
+        ]);
+    }
+
     function renderTaproot(node, map) {
         var tree = taprootTreeFor(node, map);
         if (!tree.guarded) return null;
@@ -990,6 +1062,7 @@
                     ", nearest first. The leaves lean to one side rather than balancing: every guardian can act at the same moment, so the shape costs nothing but bytes.",
             }),
             renderTaprootDiagram(tree),
+            renderTaprootCosts(tree),
         ]);
     }
 
@@ -1422,6 +1495,8 @@
         policyFor: policyFor,
         policyAstFor: policyAstFor,
         taprootTreeFor: taprootTreeFor,
+        leafBytes: leafBytes,
+        controlBlockBytes: controlBlockBytes,
         compilerBridge: compilerBridge,
         serialise: serialise,
         deserialise: deserialise,

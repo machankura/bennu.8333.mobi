@@ -642,3 +642,15 @@ img.app-shot {
 .tap-out text {
   fill: #fff;
 }
+
+.tap-costs {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.tap-costs th {
+  text-align: left;
+  font-weight: 500;
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  border: none;
+}
