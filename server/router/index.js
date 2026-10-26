@@ -25,11 +25,20 @@ module.exports = function () {
             })
         });
 
-    router.route('/playground')
+    router.route('/visualize')
         .get(function(request, response, next) {
-            response.display("playground", {
+            response.display("visualize", {
                 pageTitle: "Playground - Bennu"
             })
+        });
+
+    // The page was /playground first. The static build keeps that url alive as
+    // a redirect, so the dev server does too rather than 404ing on a link that
+    // works in production. A fragment is never sent to a server, so the tree in
+    // a shared link survives this on the browser's side.
+    router.route('/playground')
+        .get(function(request, response, next) {
+            response.redirect(301, '/visualize')
         });
 
     // The icon links in the layout cover every browser that reads them, but a

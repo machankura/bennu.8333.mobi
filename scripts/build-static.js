@@ -26,7 +26,7 @@ const pages = [
     { view: "home.pug", file: "index.html", title: "Bennu" },
     { view: "brand.pug", file: "brand.html", title: "Brand - Bennu" },
     { view: "faq.pug", file: "faqs.html", title: "Frequently Asked Questions - Bennu" },
-    { view: "playground.pug", file: "playground.html", title: "Playground - Bennu" },
+    { view: "visualize.pug", file: "visualize.html", title: "Playground - Bennu" },
     { view: "404.pug", file: "404.html", title: "Page Not Found - Bennu" },
 ]
 
@@ -62,7 +62,7 @@ const links = [
     [/href="\/"/g, 'href="index.html"'],
     [/href="\/brand"/g, 'href="brand.html"'],
     [/href="\/faqs"/g, 'href="faqs.html"'],
-    [/href="\/playground"/g, 'href="playground.html"'],
+    [/href="\/visualize"/g, 'href="visualize.html"'],
     [/(href|src)="\/static\//g, '$1="static/'],
 ]
 
@@ -96,6 +96,27 @@ console.log("copied", assets.length, "assets")
 
 fs.cpSync(path.join(staticDir, playground), path.join(out, "static", playground), { recursive: true })
 console.log("copied", playground)
+
+// The page was playground.html before it was visualize.html, and a tree is
+// shared as a link with its state in the fragment — so the old url keeps
+// working and carries the fragment across. A meta refresh would drop it, which
+// is the whole thing worth preserving, so the redirect is a line of script with
+// a plain link behind it for anyone without one.
+fs.writeFileSync(
+    path.join(out, "playground.html"),
+    [
+        "<!doctype html>",
+        '<html lang="en"><head><meta charset="utf-8">',
+        '<title>Moved — Bennu</title>',
+        '<link rel="canonical" href="visualize.html">',
+        "<script>location.replace('visualize.html' + location.search + location.hash)</script>",
+        "</head><body>",
+        '<p>This page is now at <a href="visualize.html">visualize.html</a>.</p>',
+        "</body></html>",
+        "",
+    ].join("\n")
+)
+console.log("wrote playground.html -> visualize.html redirect")
 
 // Tells Pages to serve the tree as it is rather than running it through Jekyll,
 // which would drop any file or folder whose name starts with an underscore.

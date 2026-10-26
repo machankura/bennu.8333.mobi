@@ -1,5 +1,5 @@
 // A tree-builder for a group's wallet structure, above the policy compiler on
-// /playground. See docs/group-wallet-simulator.md for the phases and for the
+// /visualize. See docs/group-wallet-simulator.md for the phases and for the
 // one thing it must not conflate: a group's t-of-n is off-chain, so the policy
 // this emits never contains it.
 //

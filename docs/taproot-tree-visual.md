@@ -1,6 +1,6 @@
 # Drawing the taproot tree for a node's wallet
 
-A second diagram under the selected node in the simulator: not the group
+A second diagram under the selected node in the simulator on `/visualize`: not the group
 hierarchy, which the tree already draws, but the **taproot output** that
 hierarchy produces — the internal key, the script tree hanging off it, and what
 each of those is worth in bytes and in privacy.

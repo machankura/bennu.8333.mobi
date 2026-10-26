@@ -1,6 +1,6 @@
 # A simulator for the group wallet structure
 
-A tree-builder above the policy compiler on `/playground`. It starts empty with
+A tree-builder above the policy compiler on `/visualize`. It starts empty with
 one control — *Add a root group* — and grows: a group gains subgroups, subgroups
 gain member wallets, each node carries its own quorum and its own guardian
 delay. The node you select compiles to a miniscript policy, and that policy is
@@ -109,7 +109,7 @@ builder, 7–8 are the join to the compiler, 9–10 are the honesty and the poli
 
 ### Phase 1 — an empty canvas and one control
 
-`server/views/js/wallet-simulator.js`, included from `playground.pug` above the
+`server/views/js/wallet-simulator.js`, included from `visualize.pug` above the
 iframe. A bordered panel in the page's own style, empty but for a single
 *Add a root group* button, and a paragraph saying what the thing is for.
 
@@ -117,7 +117,7 @@ State lives in one module-scoped object and renders through one `render()` that
 redraws the panel from state. No framework, no diffing — the tree is at most a
 few dozen nodes and a full redraw is simpler to keep correct than a partial one.
 
-**Done when:** the button appears on `/playground` and on `playground.html` from
+**Done when:** the button appears on `/visualize` and on `visualize.html` from
 `dist/`, and clicking it does nothing yet.
 
 ### Phase 2 — the root node
