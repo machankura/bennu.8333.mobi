@@ -542,3 +542,19 @@ img.app-shot {
   list-style: disc;
   margin-bottom: 0.5rem;
 }
+
+.simulator-reset a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.simulator-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+}
+
+.simulator-reset-sep {
+  margin: 0 0.6rem;
+}

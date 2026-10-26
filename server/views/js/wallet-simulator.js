@@ -443,6 +443,31 @@
         return node;
     }
 
+    // Drawn here rather than taken from the Material Icons font the layout
+    // loads. Until that font arrives these links read "clearstart again" in
+    // literal words, and if Google is slow or blocked they stay that way; an
+    // inline path renders with the first paint and owes nothing to anyone.
+    // currentColor keeps them the same ink as the link they sit in.
+    function icon(d) {
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("class", "simulator-icon");
+        svg.setAttribute("aria-hidden", "true");
+        svg.setAttribute("focusable", "false");
+        var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linecap", "round");
+        path.setAttribute("stroke-linejoin", "round");
+        svg.appendChild(path);
+        return svg;
+    }
+
+    var ICON_CLEAR = "M7 7l10 10M17 7L7 17";
+    var ICON_LINK = "M10 7H7.5a4.5 4.5 0 0 0 0 9H10M14 7h2.5a4.5 4.5 0 0 1 0 9H14M8.5 11.5h7";
+
     function renderEmpty() {
         return el("div", { class: "simulator-empty center" }, [
             el("p", {
@@ -819,9 +844,15 @@
             renderNode(state.root),
             renderPolicy(),
             el("div", { class: "center simulator-reset" }, [
-                el("a", { href: "#", "data-action": "copy-link", text: "copy a link to this tree" }),
-                el("span", { text: " · " }),
-                el("a", { href: "#", "data-action": "reset", text: "start again" }),
+                el("a", { href: "#", "data-action": "copy-link" }, [
+                    icon(ICON_LINK),
+                    el("span", { text: "copy a link to this tree" }),
+                ]),
+                el("span", { class: "simulator-reset-sep", text: "·" }),
+                el("a", { href: "#", "data-action": "reset" }, [
+                    icon(ICON_CLEAR),
+                    el("span", { text: "start again" }),
+                ]),
             ]),
         ]);
     }
@@ -891,7 +922,9 @@
         "copy-link": function (target) {
             syncFragment();
             if (navigator.clipboard) navigator.clipboard.writeText(location.href);
-            target.textContent = "link copied";
+            // The link carries an icon now, so only its label changes.
+            var label = target.querySelector("span");
+            if (label) label.textContent = "link copied";
         },
         "copy-policy": function (target) {
             var policy = target.getAttribute("data-policy");
