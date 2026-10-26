@@ -241,6 +241,14 @@ The iframe is same-origin only because the bundle is served from our own
 `/static/playground/`. If it is ever pointed back at bitcoindevkit.org this
 whole phase stops working, silently, and the fallback is what the reader gets.
 
+The control is on each node, in the row with *+ subgroup* and *+ member
+wallet*, because compiling is a thing done to a node like adding a child to one.
+At the foot of the tree it meant *the selected one, wherever that is*; on the
+row it is where the attention already is, and it gives a member wallet a
+controls row it had no reason to have before — the node most worth compiling,
+since it is the guarded one. Pressing it selects that node too, so the policy
+above the compiler is the one that was just drawn.
+
 It also draws the tree in the visual editor, which is the most legible of the
 views and otherwise sits on its default example while the policy below it says
 something else. The bundle's `__descriptorPolicy.loadPolicy` does that, and it

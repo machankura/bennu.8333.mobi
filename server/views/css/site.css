@@ -567,3 +567,9 @@ img.app-shot {
   flex: none;
 }
 
+
+/* Compiling is not building, so it reads as the quieter sibling of the two add
+   controls it shares a row with. */
+.simulator .simulator-compile-node {
+  border-style: dashed;
+}

@@ -681,9 +681,9 @@
             );
         }
 
-        var controls = null;
+        var buttons = [];
         if (node.kind === "group") {
-            controls = el("div", { class: "simulator-node-controls" }, [
+            buttons.push(
                 el("button", {
                     class: "btn-flat simulator-add",
                     type: "button",
@@ -699,9 +699,30 @@
                     "data-id": node.id,
                     "data-kind": "member",
                     text: "+ member wallet",
-                }),
-            ]);
+                })
+            );
         }
+
+        // Compiling is a thing done to a node, like adding a child to one, so
+        // it sits in the same row rather than at the foot of the tree where it
+        // meant "the selected one, wherever that is". It gives a member wallet
+        // a controls row of its own, which it had no reason to have before and
+        // which is the node most worth compiling: it is the guarded one.
+        if (compilerBridge.available()) {
+            buttons.push(
+                el("button", {
+                    class: "btn-flat simulator-add simulator-compile-node",
+                    type: "button",
+                    "data-action": "compile",
+                    "data-id": node.id,
+                    text: "compile",
+                })
+            );
+        }
+
+        var controls = buttons.length
+            ? el("div", { class: "simulator-node-controls" }, buttons)
+            : null;
 
         var body = [
             el("div", { class: "simulator-node-fields" }, fields),
@@ -785,8 +806,8 @@
     }
 
     function renderCompileControl(node, policy, map) {
-        var names = aliasNames(node, map);
-
+        // With no bridge there is nothing to press on the nodes, so the way
+        // through is here, beside the policy it copies.
         if (!compilerBridge.available()) {
             return el("div", { class: "simulator-compile" }, [
                 el("button", {
@@ -803,21 +824,11 @@
             ]);
         }
 
-        return el("div", { class: "simulator-compile" }, [
-            el("button", {
-                class: "btn black",
-                type: "button",
-                "data-action": "compile",
-                "data-id": node.id,
-                "data-names": names.join(","),
-                text: "compile it below",
+        return el("p", { class: "simulator-note simulator-compile" }, [
+            el("span", {
+                text:
+                    "Compile on any node to draw it below. The compiler wraps these conditions in P2WSH and generates a key for each name; Bennu uses taproot, so the script it draws is not the one Bennu builds — the conditions inside it are.",
             }),
-            el("p", { class: "simulator-note" }, [
-                el("span", {
-                    text:
-                        "The compiler wraps these conditions in P2WSH and generates a key for each name. Bennu uses taproot, so the script it draws is not the one Bennu builds — the conditions inside it are.",
-                }),
-            ]),
         ]);
     }
 
@@ -915,13 +926,17 @@
         compile: function (target) {
             var node = findNode(target.getAttribute("data-id"));
             if (!node) return;
-            var map = aliases();
-            var ok = compilerBridge.send(
-                policyFor(node, map),
-                policyAstFor(node, map),
-                target.getAttribute("data-names").split(",")
-            );
-            if (!ok) render();
+            // Compiling a node is also how you pick it: the policy above the
+            // compiler has to be the one that was just drawn.
+            state.selectedId = node.id;
+            render();
+            // The ids the bridge checks are in the static html, so it reports
+            // itself available long before the wasm behind them is. An early
+            // press waits rather than quietly doing nothing.
+            compilerBridge.whenReady(function () {
+                var map = aliases();
+                compilerBridge.send(policyFor(node, map), policyAstFor(node, map), aliasNames(node, map));
+            });
         },
         "copy-link": function (target) {
             syncFragment();
