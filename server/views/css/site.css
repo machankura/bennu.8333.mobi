@@ -256,10 +256,9 @@ img.app-shot {
   word-break: break-all;
 }
 
-/* The wallet-structure simulator above the policy compiler. White rather than
-   flame: it is a tool rather than prose, the compiler it feeds renders light
-   directly below it, and black on white carries 21:1 where black on flame
-   carries 5.9:1 — which matters for a panel of small type and number fields. */
+/* The wallet-structure simulator. White rather than flame: it is a tool rather
+   than prose, and black on white carries 21:1 where black on flame carries
+   5.9:1 — which matters for a panel of small type and number fields. */
 .simulator {
   background-color: #fff;
   border: 2px solid #000;
@@ -539,14 +538,6 @@ img.app-shot {
   font-size: 0.95rem;
 }
 
-.simulator-compile {
-  margin-top: 1rem;
-}
-
-.simulator-compile .simulator-note {
-  margin-top: 0.5rem;
-}
-
 .simulator-caveats {
   margin-top: 1.5rem;
 }
@@ -567,16 +558,6 @@ img.app-shot {
   flex: none;
 }
 
-
-/* Filled, where the two add controls beside it are outlined: compiling is the
-   thing the tree is built to do. Sized to their row so it does not tower over
-   the controls it sits with. */
-.simulator .simulator-compile-node {
-  height: 2rem;
-  line-height: 2rem;
-  padding: 0 0.9rem;
-  font-size: 0.8rem;
-}
 
 .simulator .simulator-remove {
   display: inline-flex;

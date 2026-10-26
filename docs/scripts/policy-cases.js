@@ -145,56 +145,6 @@ console.log("policy cases");
     check("maximum delay", S.policyFor(child), "or(pk(child),and(pk(root),older(65535)))");
 }
 
-// The AST the blocks are drawn from has to say the same thing as the string,
-// or the picture and the text disagree about the same tree.
-console.log("block tree cases");
-{
-    let grandchild;
-    tree((r, make) => {
-        const mid = make("group", "Mid", { guarded: true, delay: 12 });
-        grandchild = make("group", "Leaf", { guarded: true });
-        mid.children.push(grandchild);
-        r.delay = 144;
-        r.children.push(mid);
-    });
-    const ast = S.policyAstFor(grandchild);
-    check(
-        "ast mirrors the string",
-        JSON.stringify(ast),
-        JSON.stringify({
-            type: "or",
-            subs: [
-                { type: "pk", alias: "leaf" },
-                {
-                    type: "or",
-                    subs: [
-                        { type: "and", subs: [{ type: "pk", alias: "mid" }, { type: "older", value: 12 }] },
-                        { type: "and", subs: [{ type: "pk", alias: "root" }, { type: "older", value: 144 }] },
-                    ],
-                },
-            ],
-        })
-    );
-
-    // Every node type in it must be one the bundle's policyToXml can draw.
-    const drawable = new Set(["pk", "older", "after", "and", "or", "thresh"]);
-    let unknown = [];
-    (function walk(n) {
-        if (!drawable.has(n.type)) unknown.push(n.type);
-        (n.subs || []).forEach(walk);
-    })(ast);
-    check("every node type is drawable", unknown.join(",") || "none", "none");
-}
-
-{
-    const root = tree(() => {});
-    check("an unguarded root is a single pk block", JSON.stringify(S.policyAstFor(root)), JSON.stringify({ type: "pk", alias: "root" }));
-}
-
-// The leaf is <32-byte key> OP_CHECKSIGVERIFY <delay> OP_CHECKSEQUENCEVERIFY.
-// bennu-kmp's guardians note states 36 bytes at a delay of 12; the rest follows
-// from minimal CScriptNum pushes, and the whole point is that the number a
-// parent types changes the size of the script.
 console.log("taproot size cases");
 check("delay 6 -> 36 bytes", S.leafBytes(6), 36);
 check("delay 12 -> 36 bytes (the note's number)", S.leafBytes(12), 36);

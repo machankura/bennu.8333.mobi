@@ -52,10 +52,6 @@ const assets = [
     "img/icon/site.webmanifest",
 ]
 
-// The bdk-cli playground the playground page frames: a prebuilt webpack bundle
-// that loads its chunks and wasm from beside its own script.
-const playground = "playground"
-
 // The server routes by path; a flat file tree cannot, so the internal links
 // become their file names. Anything else absolute is an asset.
 const links = [
@@ -93,9 +89,6 @@ for (const asset of assets) {
     copy(path.join(staticDir, asset), path.join(out, "static", asset))
 }
 console.log("copied", assets.length, "assets")
-
-fs.cpSync(path.join(staticDir, playground), path.join(out, "static", playground), { recursive: true })
-console.log("copied", playground)
 
 // The page was playground.html before it was visualize.html, and a tree is
 // shared as a link with its state in the fragment — so the old url keeps

@@ -7,11 +7,9 @@ block content
     .container
         h1 Playground
 
-        p.flow-text Paste a descriptor to see what it takes to spend from it. A group exports its wallet as a standard descriptor; pick #[strong Bitcoin] as the network, start the wallet to sync its balance and addresses, or open it in the policy compiler to see its spending conditions as blocks.
+        p.flow-text Draw a group and the groups under it, and see what that comes to on the chain: the conditions a spend has to meet, and the taproot output they are folded into.
 
-        p This is the #[a(href="https://bitcoindevkit.org/bdk-cli/playground/", target="_blank") bdk-cli playground] from the Bitcoin Dev Kit, running in your browser. It only ever needs public keys: never paste a private key or seed into it.
-
-        p The policy compiler runs entirely on this page and sends nothing anywhere. #[strong Starting the wallet does not.] Syncing asks #[a(href="https://blockstream.info", target="_blank") blockstream.info] for the history of every address the descriptor derives, which tells them the whole of the wallet and that someone here is interested in it. Compile freely; sync only a descriptor you are willing to hand over.
+        p It runs entirely on this page. Nothing is sent anywhere, nothing is stored, and there is no key in any of it — the names stand in for keys, and the page never asks you for one.
 
         h2 The structure
 
@@ -21,7 +19,7 @@ block content
 
         p.simulator-caveats
             strong What this does not model.
-            |  A policy that compiles is not a group that works, and a tree that draws is not the whole of one address. Seven of Bennu's rules are nowhere in what you see above, and each is kept somewhere else:
+            |  A policy on a page is not a group that works, and a tree that draws is not the whole of one address. Seven of Bennu's rules are nowhere in what you see above, and each is kept somewhere else:
         ul.simulator-caveats-list
             li
                 strong The ceremony.
@@ -46,9 +44,6 @@ block content
                 |  #[code P] is a FROST threshold key that several members have to co-operate to use. The taproot tree can no more show that than the policy can — it is one key either way.
 
         h2 The policy
-
-        //- An iframe keeps materialize's styles off the playground's own inputs.
-        iframe(src="/static/playground/playground.html", title="bdk-cli playground", style="width: 100%; height: 1200px; border: none;")
 
 block additionalScripts
     script

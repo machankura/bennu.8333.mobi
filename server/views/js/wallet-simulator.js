@@ -1,7 +1,8 @@
-// A tree-builder for a group's wallet structure, above the policy compiler on
-// /visualize. See docs/group-wallet-simulator.md for the phases and for the
-// one thing it must not conflate: a group's t-of-n is off-chain, so the policy
-// this emits never contains it.
+// A tree-builder for a group's wallet structure, on /visualize. It draws the
+// tree, the conditions a spend has to meet, and the taproot output they fold
+// into. See docs/group-wallet-simulator.md for the phases and for the one thing
+// it must not conflate: a group's t-of-n is off-chain, so the policy this emits
+// never contains it.
 //
 // Vanilla on purpose. The site has no bundler: pug inlines this file into a
 // script tag, so it must run as it is written, in a browser, with Materialize
@@ -281,169 +282,6 @@
             state.selectedId = null;
             return false;
         }
-    }
-
-    // ---- the bridge to the compiler ---------------------------------------
-
-    // The only code that reaches into the iframe. Every id below belongs to the
-    // vendored bdk-cli bundle and a refresh of it may rename any of them, so
-    // each one is checked and a miss degrades to a copy button rather than
-    // throwing: the tree and the policy are useful on their own, and a broken
-    // bridge must not take them down.
-    //
-    // It is same-origin only because the bundle is served from our own
-    // /static/playground/. Point the iframe back at bitcoindevkit.org and this
-    // stops working, silently, and the fallback is what the reader gets.
-    var compilerBridge = {
-        IDS: ["policy", "compile_button", "compiler_script_type", "compiler_aliases", "add_key_alias"],
-
-        doc: function () {
-            try {
-                var frame = document.querySelector(".simulator-page iframe, iframe");
-                return frame && frame.contentDocument;
-            } catch (e) {
-                return null;
-            }
-        },
-
-        available: function () {
-            var d = this.doc();
-            if (!d) return false;
-            return this.IDS.every(function (id) {
-                return !!d.getElementById(id);
-            });
-        },
-
-        // The visual editor is the most legible of the three views, and leaving
-        // it on its default example while the policy below it says something
-        // else is worse than not drawing at all. The bundle's own loadPolicy
-        // does it, reached through the one line this repo patches into the
-        // vendored file; without that line the blocks simply stay put.
-        draw: function (ast) {
-            try {
-                var frame = document.querySelector(".simulator-page iframe, iframe");
-                var w = frame && frame.contentWindow;
-                if (!w || !w.__descriptorPolicy || !w.__descriptorPolicy.loadPolicy) return false;
-                w.__descriptorPolicy.loadPolicy(ast);
-                return true;
-            } catch (e) {
-                return false;
-            }
-        },
-
-        // Two different questions, and the compile control needs both answered.
-        //
-        // available() asks whether the ids are there at all. On a cold load the
-        // iframe's contentDocument is about:blank until the real document
-        // commits -- 46ms on localhost, and as long as the network takes over
-        // the wire -- so it is false while the panel first renders, and the
-        // compile controls are left out of a tree built in that window. This
-        // polls for it and fires once, so they appear.
-        whenAvailable: function (run) {
-            var self = this;
-            var tries = 0;
-            (function poll() {
-                if (self.available()) return run();
-                if (tries++ > 240) return;
-                setTimeout(poll, 250);
-            })();
-        },
-
-        // The bundle is a 5MB wasm download and a Blockly workspace built after
-        // it, so a link opened cold is interactive here long before the
-        // compiler below exists. __descriptorPolicy appears when the chunk
-        // executes, which is earlier still -- the workspace it draws into is
-        // the thing worth waiting for, and a rendered block is the only
-        // evidence of it from outside.
-        whenReady: function (run) {
-            var self = this;
-            var tries = 0;
-            (function poll() {
-                var d = self.doc();
-                var frame = document.querySelector(".simulator-page iframe, iframe");
-                var w = frame && frame.contentWindow;
-                var ready =
-                    d &&
-                    w &&
-                    w.__descriptorPolicy &&
-                    self.available() &&
-                    d.querySelector("#blocklyDiv .blocklyDraggable");
-                if (ready) return run();
-                // ~30s, then give up quietly: the compile button still works,
-                // and a visitor who waited that long has one to press.
-                if (tries++ > 120) return;
-                setTimeout(poll, 250);
-            })();
-        },
-
-        send: function (policy, ast, names) {
-            var d = this.doc();
-            if (!d) return false;
-            try {
-                var box = d.getElementById("compiler_aliases");
-                var rows = function () {
-                    return box.querySelectorAll("input[name=alias]");
-                };
-                // One row per alias. The add button lives in the last row and
-                // the rows default to "Generate WIF Key", which is what we want:
-                // the simulator has names, not keys.
-                var guard = 0;
-                while (rows().length < names.length && guard++ < 64) {
-                    d.getElementById("add_key_alias").click();
-                }
-                rows().forEach(function (input, i) {
-                    if (i >= names.length) return;
-                    input.value = names[i];
-                    input.dispatchEvent(new Event("input", { bubbles: true }));
-                });
-
-                // The compiler offers sh, wsh and sh-wsh — there is no taproot
-                // here. P2WSH is the honest closest: the spending conditions are
-                // exactly the ones above, and only the wrapper differs from what
-                // Bennu builds.
-                // Draw first. Loading the blocks makes Blockly write its own
-                // rendering of them back into #policy, and its or blocks carry
-                // no weights, so drawing afterwards would leave the input
-                // showing an unweighted policy that is not the one just
-                // compiled.
-                this.draw(ast);
-
-                d.getElementById("compiler_script_type").value = "wsh";
-                d.getElementById("policy").value = policy;
-                d.getElementById("compile_button").click();
-                return true;
-            } catch (e) {
-                return false;
-            }
-        },
-    };
-
-    // The same conditions as policyFor, in the shape the vendored bundle's
-    // policyToXml walks: {type:'pk',alias}, {type:'older',value},
-    // {type:'and'|'or',subs:[a,b]}. Built from the tree rather than parsed back
-    // out of the string, so the two cannot drift into disagreeing.
-    //
-    function policyAstFor(node, map) {
-        map = map || aliases();
-        var self = { type: "pk", alias: map[node.id] };
-        if (!node.guarded) return self;
-
-        var ancestors = ancestorsOf(node.id);
-        if (!ancestors.length) return self;
-
-        var leaves = ancestors.map(function (a) {
-            return {
-                type: "and",
-                subs: [{ type: "pk", alias: map[a.id] }, { type: "older", value: a.delay }],
-            };
-        });
-
-        var guards = leaves[leaves.length - 1];
-        for (var i = leaves.length - 2; i >= 0; i--) {
-            guards = { type: "or", subs: [leaves[i], guards] };
-        }
-
-        return { type: "or", subs: [self, guards] };
     }
 
     // ---- the taproot tree -------------------------------------------------
@@ -815,37 +653,6 @@
                     "data-kind": "member",
                     text: "+ member wallet",
                 })
-            );
-        }
-
-        // Compiling is a thing done to a node, like adding a child to one, so
-        // it sits in the same row rather than at the foot of the tree where it
-        // meant "the selected one, wherever that is". It gives a member wallet
-        // a controls row of its own, which it had no reason to have before and
-        // which is the node most worth compiling: it is the guarded one.
-        if (compilerBridge.available()) {
-            buttons.push(
-                el("button", {
-                    class: "btn black simulator-compile-node",
-                    type: "button",
-                    "data-action": "compile",
-                    "data-id": node.id,
-                    text: "compile",
-                })
-            );
-        }
-
-        // The root has no remove: it is the whole tree, and "start again"
-        // already says that in words.
-        if (node !== state.root) {
-            buttons.push(
-                el("button", {
-                    class: "btn-flat simulator-add simulator-remove",
-                    type: "button",
-                    "data-action": "remove",
-                    "data-id": node.id,
-                    title: "Remove this wallet",
-                }, [icon(ICON_TRASH), el("span", { text: "remove" })])
             );
         }
 
@@ -1233,43 +1040,7 @@
             el("code", { class: "simulator-policy-text", text: policy }),
             el("table", { class: "simulator-aliases" }, [el("tbody", {}, rows)]),
             renderOmission(node, map),
-            renderCompileControl(node, policy, map),
             renderTaproot(node, map),
-        ]);
-    }
-
-    function aliasNames(node, map) {
-        return [map[node.id]].concat(
-            (node.guarded ? ancestorsOf(node.id) : []).map(function (a) {
-                return map[a.id];
-            })
-        );
-    }
-
-    function renderCompileControl(node, policy, map) {
-        // With no bridge there is nothing to press on the nodes, so the way
-        // through is here, beside the policy it copies.
-        if (!compilerBridge.available()) {
-            return el("div", { class: "simulator-compile" }, [
-                el("button", {
-                    class: "btn black",
-                    type: "button",
-                    "data-action": "copy-policy",
-                    "data-policy": policy,
-                    text: "copy the policy",
-                }),
-                el("span", {
-                    class: "simulator-note",
-                    text: " then paste it into the policy compiler below.",
-                }),
-            ]);
-        }
-
-        return el("p", { class: "simulator-note simulator-compile" }, [
-            el("span", {
-                text:
-                    "Compile on any node to draw it below. The compiler wraps these conditions in P2WSH and generates a key for each name; Bennu uses taproot, so the script it draws is not the one Bennu builds — the conditions inside it are.",
-            }),
         ]);
     }
 
@@ -1364,21 +1135,6 @@
                 },
             };
             render();
-        },
-        compile: function (target) {
-            var node = findNode(target.getAttribute("data-id"));
-            if (!node) return;
-            // Compiling a node is also how you pick it: the policy above the
-            // compiler has to be the one that was just drawn.
-            state.selectedId = node.id;
-            render();
-            // The ids the bridge checks are in the static html, so it reports
-            // itself available long before the wasm behind them is. An early
-            // press waits rather than quietly doing nothing.
-            compilerBridge.whenReady(function () {
-                var map = aliases();
-                compilerBridge.send(policyFor(node, map), policyAstFor(node, map), aliasNames(node, map));
-            });
         },
         "copy-link": function (target) {
             syncFragment();
@@ -1571,13 +1327,6 @@
 
     // ---- wiring -----------------------------------------------------------
 
-    function compileSelected() {
-        var node = findNode(state.selectedId);
-        if (!node) return;
-        var map = aliases();
-        compilerBridge.send(policyFor(node, map), policyAstFor(node, map), aliasNames(node, map));
-    }
-
     function init() {
         var mount = document.getElementById("wallet-simulator");
         if (!mount) return;
@@ -1589,21 +1338,8 @@
         // once the compiler below is up, rather than waiting for a button the
         // sender already knows the answer to. A tree built here by hand does
         // not — that would recompile on every edit.
-        var restored = readFragment();
+        readFragment();
         render();
-
-        // The first render almost always happens before the iframe has a
-        // document, so the controls it decided to leave out have to be put back
-        // once there is one. Redrawing under a caret would take it out of the
-        // field, so this waits for the panel to not hold focus -- it fires
-        // within a second or two of load, when nobody is usually typing, but a
-        // name being typed is exactly when a surprise redraw hurts most.
-        compilerBridge.whenAvailable(function reRender() {
-            if (mount.contains(document.activeElement)) return setTimeout(reRender, 500);
-            render();
-        });
-
-        if (restored) compilerBridge.whenReady(compileSelected);
     }
 
     if (typeof document !== "undefined") {
@@ -1624,11 +1360,9 @@
         aliases: aliases,
         ancestorsOf: ancestorsOf,
         policyFor: policyFor,
-        policyAstFor: policyAstFor,
         taprootTreeFor: taprootTreeFor,
         leafBytes: leafBytes,
         controlBlockBytes: controlBlockBytes,
-        compilerBridge: compilerBridge,
         serialise: serialise,
         deserialise: deserialise,
         MIN_DELAY: MIN_DELAY,
