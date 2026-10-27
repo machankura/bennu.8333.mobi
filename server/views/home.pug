@@ -71,6 +71,23 @@ block content
             .center
                 .row
                     .col.s12
+                        h2 The group's Lightning wallet
+                        .row
+                        .divider
+                        .container
+                            p.flow-text A group can open Lightning channels, and the key that funds them is held the way the on-chain key is: no member holds it, no server holds it, and neither does any set of members too small to sign. A channel that closes pays out to the group's own on-chain wallet, which is why a group needs that wallet before it can open a channel at all.
+
+                            p.flow-text One member at a time runs the node. The operator keeps it on their own device and tells the room what it holds — and running it buys no more power than coordinating a ceremony does. Every commitment the node needs signed goes to the other members' devices, and each one rebuilds the transaction from the channel's own parameters before it signs, and refuses what does not match. The operator cannot move the group's money alone.
+
+                            p.flow-text Paying out is a decision the group signs. A payment, a channel close or a force close carries an authorisation from the group with a budget on it, and the node acts on each one once. Receiving is quieter: a member asks the operator's node for an invoice, and the node answers it.
+
+                            p.flow-text This is the newest part of Bennu and the least proven. The threshold scheme behind the funding key has not been reviewed outside the project — the library that implements it says as much itself — so a channel is capped at a million sats. Every member's device holds to that cap whoever opened the wallet, splices are refused so no channel grows into one, and the screen you open a wallet from says all of this before you do. The node runs only while the operator has the app open.
+
+        .divider
+        .section
+            .center
+                .row
+                    .col.s12
                         h2 Clans within clans
                         .row
                         .divider
