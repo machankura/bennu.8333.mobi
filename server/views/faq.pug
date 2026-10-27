@@ -38,6 +38,22 @@ block content
                         .collapsible-body
                             p.flow-text A member builds the transaction and proposes it in the chat, where everyone can see what it does. Each device checks it against the coins for itself before signing — the addresses, the amounts, the fee — and once enough members have signed it goes to the network. Coins behind an open proposal are held back so two spends cannot reach for the same one, and a transaction that stalls can be pushed through at twice the fee.
                     li
+                        .collapsible-header Can a group use Lightning?
+                        .collapsible-body
+                            p.flow-text Yes. A group can open Lightning channels, and the key that funds them is held the way the on-chain key is — no member holds it, no server holds it, and neither does any set of members too small to sign. The group needs its on-chain wallet first, because that is where a channel pays out when it closes.
+                    li
+                        .collapsible-header Who runs the Lightning node?
+                        .collapsible-body
+                            p.flow-text One member at a time, on their own device. That member is the operator, and the job buys no extra power: every commitment the node needs signed goes to the other members' devices, and each one rebuilds the transaction from the channel's own parameters before it signs and refuses what does not match. The operator cannot move the group's money alone, and cannot keep any of the group's balance if a channel is forced closed. The node runs only while the operator has the app open.
+                    li
+                        .collapsible-header How does the group pay over Lightning?
+                        .collapsible-body
+                            p.flow-text Paying out is a decision the group signs. A payment, a channel close or a force close carries an authorisation with a budget on it, and the node acts on each one once. Receiving is simpler: a member asks the operator's node for an invoice, and the node answers it.
+                    li
+                        .collapsible-header Is the Lightning wallet ready to use?
+                        .collapsible-body
+                            p.flow-text It is the newest part of Bennu and the least proven. The threshold scheme behind the funding key has had no review outside the project, and the library that implements it says not to put money behind it. So a channel is capped at a million sats, every member's device holds to that cap whoever opened the wallet, splices are refused so no channel grows past it, and the screen you open a wallet from says all of this before you do.
+                    li
                         .collapsible-header What is a subgroup?
                         .collapsible-body
                             p.flow-text A group a group makes. The child gets its own room, its own ceremony and its own fresh key — not one derived from the parent's — plus a birth certificate: the parent's quorum signing that this room is its child. Anyone can check the certificate, and the parent still cannot sign in the child's place.
@@ -60,7 +76,7 @@ block content
                     li
                         .collapsible-header What does it cost?
                         .collapsible-body
-                            p.flow-text Bennu takes no fee. You pay the ordinary bitcoin network fee on a spend, and nothing else.
+                            p.flow-text Bennu takes no fee. On-chain you pay the ordinary network fee on a spend and nothing else. On Lightning you also pay whoever provides the channel — a fee for opening one, and a routing fee on a payment — and the cap on what the group will pay for that liquidity is part of what the group signs when it opens the wallet, so no one member can agree to a larger one on everybody's behalf.
 
         p.flow-text Think we missed something? Need more information? The answer is in the code, at #[a(href="https://github.com/machankura/bennu-kmp", target="_blank") github.com/machankura/bennu-kmp].
 
